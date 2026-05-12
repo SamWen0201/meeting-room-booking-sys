@@ -2,15 +2,18 @@
 import { ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
 
+
 const roomListStore = useRoomList();
 
 // bookingForm state
+const id = ref(crypto.randomUUID())
 const name = ref("");
 const capacity = ref(10);
 const equipments = ref([]);
 
 function addRoom() {
   roomListStore.addRoom({
+    id: id.value,
     name: name.value,
     capacity: capacity.value,
     equipments: equipments.value,
