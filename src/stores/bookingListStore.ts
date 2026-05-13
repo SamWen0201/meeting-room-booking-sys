@@ -11,9 +11,13 @@ export const useBookingList = defineStore('bookingList', () => {
         bookings.value = bookingsData.data;
     }
 
-    function addBooking(){}
+    function addBooking(booking: Booking): void{
+        bookings.value.push(booking);
+        console.log(bookings.value)
+        console.log("booking is added!");
+    }
 
     
 
-    return {bookings, fetchBookings,}
+    return {bookings, fetchBookings, addBooking}
 })

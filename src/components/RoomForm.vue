@@ -13,13 +13,14 @@ const equipments = ref([]);
 
 function addRoom():void {
   if(roomFormIsValid()) {
-    const id = ref(crypto.randomUUID());
     roomListStore.addRoom({
-    id: id.value,
+    id: crypto.randomUUID(),
     name: name.value,
     capacity: capacity.value,
     equipments: equipments.value,
   });
+
+    // remove the input
     name.value = "";
     capacity.value = 0;
     equipments.value = [];

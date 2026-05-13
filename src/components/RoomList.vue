@@ -43,8 +43,10 @@ function deleteRoomItem(id: string): void{
     console.log('Room has been deleted!');
    }
 }
+
 function roomIsUsing(roomId: string): boolean{
     // 這邊對目前的 bookings 做 loop，去找目前的 room.id 是否有預約
+    // 作法就是如果該會議的結束時間 小於 now ，那就代表這個會議室 不是 正在使用 就是 未來將要被使用
     const now: number =  Date.now(); // today timestamp
     const room = bookingListStore.bookings.find( (el) => el.roomId === roomId && el.endTime > now );
 
