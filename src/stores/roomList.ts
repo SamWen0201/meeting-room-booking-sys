@@ -18,19 +18,18 @@ export const useRoomList = defineStore("roomList", () => {
   
 
 
-  function addRoom(room: Room) {
+  function addRoom(room: Room): void {
     rooms.value.push(room);
     console.log("Room add success!");
     console.log(rooms.value);
   }
 
-  function deleteRoom(){
-    // 需要進行判斷，如果該會議室有未來預約，需要跳出警告或是禁止刪除
-    
+  function deleteRoom(id: string): void{
+    rooms.value = rooms.value.filter( (el) => el.id !== id);
   }
 
   function editRoom(){
   }
 
-  return { rooms, addRoom, fetchRooms };
+  return { rooms, addRoom, fetchRooms, deleteRoom };
 });

@@ -13,10 +13,20 @@ import { useBookingList } from "../stores/bookingListStore";
 const roomListStore = useRoomList();
 const bookingListStore = useBookingList();
 
-// show addRoomForm
+// show addRoomForm or not
 const addRoomFormIsShow = ref<boolean>(false);
 function showAddRoomForm(): void{
     addRoomFormIsShow.value = !addRoomFormIsShow.value;
+}
+
+// finished later
+function editRoomItem(id: string): void {
+    if (roomIsUsing(id)) {
+        console.log("Room is using or will use in the future. You can't edit the room. ");
+        return;
+    }else {
+        // edit the room
+    }
 }
 
 function deleteRoomItem(id: string): void{
@@ -24,9 +34,21 @@ function deleteRoomItem(id: string): void{
     console.log(id);
     console.log(bookingListStore.bookings);
 
-   // 這邊對目前的 bookings 做 loop，去找目前的 room.id 是否有預約
+   if(roomIsUsing(id)) {
+    console.log("Room is using or will use in the future. You can't delete the room. ");
+    return;
+   }else {
+    // delete the room
+    roomListStore.deleteRoom(id);
+    console.log('Room has been deleted!');
+   }
+}
+function roomIsUsing(roomId: string): boolean{
+    // 這邊對目前的 bookings 做 loop，去找目前的 room.id 是否有預約
+    const now: number =  Date.now(); // today timestamp
+    const room = bookingListStore.bookings.find( (el) => el.roomId === roomId && el.endTime > now );
 
-
+    return room ? true : false;
 }
 
 </script>
@@ -40,7 +62,7 @@ function deleteRoomItem(id: string): void{
                 <ul>
                     <li v-for="equipment in room.equipments">{{ equipment }}</li>
                 </ul>
-                <button type="button">編輯</button>
+                <button type="button" @click="editRoomItem(room.id)">編輯</button>
                 <button type="button" @click="deleteRoomItem(room.id)">刪除</button>
             </li>
         </ul>

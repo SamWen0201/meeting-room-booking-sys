@@ -13,5 +13,7 @@ export const useBookingList = defineStore('bookingList', () => {
 
     function addBooking(){}
 
+    
+
     return {bookings, fetchBookings,}
 })

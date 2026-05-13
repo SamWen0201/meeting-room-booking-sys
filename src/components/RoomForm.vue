@@ -12,7 +12,6 @@ const capacity = ref(10);
 const equipments = ref([]);
 
 function addRoom():void {
- 
   if(roomFormIsValid()) {
     const id = ref(crypto.randomUUID());
     roomListStore.addRoom({
