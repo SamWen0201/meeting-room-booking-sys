@@ -20,9 +20,11 @@ declare module 'vue' {
     ElOption: typeof import('element-plus/es')['ElOption']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElTimePicker: typeof import('element-plus/es')['ElTimePicker']
+    ElTimeSelect: typeof import('element-plus/es')['ElTimeSelect']
     RoomForm: typeof import('./src/components/RoomForm.vue')['default']
     RoomList: typeof import('./src/components/RoomList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Schedule: typeof import('./src/components/Schedule.vue')['default']
   }
 }
