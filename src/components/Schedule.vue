@@ -97,7 +97,7 @@ function calculateBlockSpan(
         @change=""
         :default-time="new Date(Date.now())"
       />
-      <el-button type="primary">新增預約</el-button>
+      <el-button type="primary" color="#3B82F6">新增預約</el-button>
     </div>
     <div class="timeline-chart">
       <ul>
