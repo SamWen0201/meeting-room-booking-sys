@@ -53,8 +53,8 @@ const bookings: Booking[] = [
     roomId: "1",
     userId: "1",
     title: "臨時動議B",
-    startTime: 1778652000000,
-    endTime: 1778657400000,
+    startTime: 1778652000000 + 1800000,
+    endTime: 1778657400000 + 1800000,
   },
   {
     id: "5",

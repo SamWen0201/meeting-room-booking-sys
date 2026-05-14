@@ -1,0 +1,25 @@
+@use './variables' as *;
+:root {
+    // COLOR Sass variables
+    --color-primary-blue: #3B82F6;
+    --color-sucess: #10B981;
+    --color-danger: #EF4444;
+    --color-text-main: #1F2937;
+    --color-slidebar: #111827;
+    --color-border: #E5E7EB;
+}   
+*, 
+*::before, 
+*::after {
+    margin: 0;
+    border: 0;
+    box-sizing: inherit;
+}
+html {
+  font-size: 62.5%; // 16 * 62.5% = 10
+}
+body {
+  box-sizing: border-box;
+  font-family: "Noto Sans TC", sans-serif;
+  font-weight: $font-weight-body;
+}

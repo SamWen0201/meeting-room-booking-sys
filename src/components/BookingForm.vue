@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, ref} from "vue"
+import {computed, ref, reactive} from "vue"
 
 import type { Booking } from "@/types";
 import type { Room } from "@/types";
@@ -52,10 +52,12 @@ function addBooking(): void {
     // 會議主題：長度限制 2-50 字元。
     // 容納人數：必須為正整數。
 
-    if (!titleIsValid() || !durationIsValid() || !dateIsValid() || !roomId.value) {
-        console.log("Booking failed! Booking is invalid!");
-    }else {
+    if (!titleIsValid() || !durationIsValid() || !dateIsValid() || !roomId.value) { 
          // addBooking
+        console.log("Booking failed! Booking is invalid!");   
+        return;
+    }else {
+        
         const [bookingStartTime, bookingEndTime] =  combineDateTime() as [Date, Date];
 
         const newBooking: Booking = {
@@ -80,10 +82,11 @@ function addBooking(): void {
 // 會議主題：長度限制 2-50 字元。
 // 容納人數：必須為正整數。
 function titleIsValid(): boolean {
-    if (title.value.length < 2 && title.value.length > 50) {
+    if (title.value.length < 2 || title.value.length > 50) {
         return false;
+    }else {
+        return true;
     }
-    return true;
 }
 
 // 會議開始時間不能大於結束時間
@@ -169,14 +172,27 @@ function roomIsUsing(roomId: string): boolean {
     }
 }
 
-
+// const form = reactive({
+//   name: '',
+//   region: '',
+//   date1: '',
+//   date2: '',
+//   delivery: false,
+//   type: [],
+//   resource: '',
+//   desc: '',
+// })
 
 </script>
 <template>
     <div>
-        <h2>預約會議室</h2>
-
-        <form action="#" @submit.prevent="addBooking">
+        <!-- <el-form :model="form" label-width="auto" style="max-width: 600px">
+            <el-form-item label="Activity name" label-position="top">
+                <el-input v-model="form.name" />
+            </el-form-item>
+        </el-form> -->
+    
+       <form action="#" @submit.prevent="addBooking">
             <label for="title">會議主題</label>
             <input type="text" id="title" v-model="title" required minlength="2" maxlength="50">
            
@@ -228,7 +244,7 @@ function roomIsUsing(roomId: string): boolean {
             <button type="button" @click="cancelBooking">取消</button>
             <button type="button" @click="addBooking">確認預約</button>
 
-        </form>
+        </form> 
     </div>
 </template>
 

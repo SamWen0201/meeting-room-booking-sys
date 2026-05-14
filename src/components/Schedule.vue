@@ -2,14 +2,16 @@
 import { computed, onMounted, ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
-import type { RoomTimeLine } from "@/types";
 import type { Booking } from "@/types";
 const useRoomListStore = useRoomList();
 const useBookingListStore = useBookingList();
 
 const today = ref("");
-
+function consoleSelectTime() {
+    console.log(new Date(today.value));
+}
 // 先計算一天 9:00-18:00 之間可以分為多少 30分鐘
+// 後來用總共時間計算之後，就不需要這個 function 了
 function calculateTimeBlock(
   [startTime, endTime]: string[],
   blockTime: number = 30,
@@ -30,26 +32,36 @@ function calculateTimeBlock(
   );
 }
 
-const roomTimeLines = ref<RoomTimeLine[]>([]);
+// 計算出像是 09:00 10:00 11:00 .... 18:00 這樣的字串陣列提供給時間軸標題 render 
+// startTime 開始時間以字串 '09:00' 為格式
+// endTime 以 '18:00' 當作結束時間 
+// timeFragmentInMinute:number 是幾分鐘為一個區間，預設為 60 分鐘
 
-onMounted(() => {
-  // 初始化 roomTimeLines state
-  roomTimeLines.value = useRoomListStore.rooms.map((el) => {
-    const roomIsUsingArrLength = calculateTimeBlock(["9:00", "18:00"]);
-    const roomIsUsingArr: boolean[] = new Array(roomIsUsingArrLength).fill(
-      false,
-    );
+// 問題: 這邊最後計算出來會少一個點(因為是透過計算中間的空缺，一定會少 1，
+// 這邊先直接將陣列 timeLineHeaderList 長度 + 1 補上 endTime ，之後再去思考該怎麼調整
+// 目前又把長度維持原樣，因為這樣下方的時間軸比例跟上方的標題列才會正確
+function calculateTimeLineHeaderList(startTime: string, endTime: string, timeFragmentInMinute: number = 60): string[] {
+    const [startTimeHour, startTimeMinute] = startTime.split(':').map(Number) as [number, number];
+    const [endTimeHour, endTimeMinute] = endTime.split(":").map(Number) as [number, number];
 
-    return {
-      roomId: el.id,
-      roomIsUsingArr,
-    };
-  });
-});
+    const timeLineHeaderList: string[] = new Array(calculateTimeBlock([startTime, endTime], timeFragmentInMinute)).fill(""); // all element will be ""
+
+    // 先把 小時, 分鐘都算出來
+    for( let i=0; i < timeLineHeaderList.length; i++) {
+        let timeHour = startTimeHour + Math.floor((startTimeMinute + i *  timeFragmentInMinute) / 60) ;
+        let timeMinute = (startTimeMinute + i *  timeFragmentInMinute) % 60 ;
+
+        timeLineHeaderList[i] = `${timeHour.toString().length < 2 ? 0 : ""}${timeHour}:${timeMinute === 0 ? "00" : timeMinute}`;
+    }
+    
+    return timeLineHeaderList;
+}
+const timeHeaderList = calculateTimeLineHeaderList("09:00", '18:00'); 
+console.log(timeHeaderList);
+
 
 // 根據 Schedule 的 today state 來決定 roomIsUsingArr  各元素的 truthy value
 // 1. 先獲得今天的 預約紀錄 -> 今天 + 1 天，怎麼去找到屬於這一天的紀錄
-//
 const todayBookings = computed<Booking[]>(() => {
   // 將預約紀錄的日期等於今天日期的所有預約紀錄計算出來
   return useBookingListStore.bookings.filter((el) => {
@@ -72,52 +84,141 @@ const todayBookings = computed<Booking[]>(() => {
   });
 });
 
-// booking 中的 startTime and endTime 要能夠讓 roomTimeLines 中的屬性 roomIsUsingArr 中對應的陣列設定 truthy value
-// 假設 9:00 - 9:30 代表 roomIsUsingArr[0] = truth
-// (bookingStart - todayDate)= 開始時間多出來的 30n 分鐘 n 就會是 roomIsUsingArr 的索引值為 true 的元素？
-// (bookingEnd - bookingStart) / blockTime = 維持的格子數，也就是 由前面一個算式中的 n + 這邊算出來的數值？
-// 最後計算出來的元素是第 n ~ n+
-
-// calculateBlockSpan 這個 function 會在 todayBookings 中的 每一個 booking 跑一次
-// 造成的 side effect 是修改我們的 roomIsUsingArr 為對應到 startTime, endTime 的 truthy value
-function calculateBlockSpan(
+// calculateMeetingBlock 這個 function 會在 todayBookings 中的 每一個 booking 跑一次
+// calculateMeetingBlock 接收 booking 的 startTime, endTime 並且跟 todayTime 一起計算出 預約記錄的 block 的 css style left 和 width
+function calculateMeetingBlock(
   bookingStartTime: number,
   bookingEndTime: number,
-): void {}
+  todayTime: number,
+  wholeTime: number = 540
+): [string, string] {
+    const left = (((bookingStartTime - todayTime) / 1000  / 60 / wholeTime) * 100).toFixed(3); // 毫秒 / 1000 -> 秒, 秒 / 60 -> 分鐘, 分鐘 / wholeTime 會是  
+    const width = (((bookingEndTime - bookingStartTime) / 1000 / 60 / wholeTime) * 100).toFixed(3);
+    
+    return [left, width]
+}
+
+// 將 booking 中的資料拿出來，並且計算出對應的 left 和 width 數值，回傳物件 
+function getBlockStyle(booking: Booking): { left: string; width: string} {
+    // 這邊在計算今天的 timestamp 的時候，不確定是否還是要使用 ref ，或許可以直接使用 startTime 計算?
+    const todayTimeStamp: number = new Date(today.value).getTime() + 9 * 60 * 60 * 1000; // 00:00 + 9小時 -> 9:00
+
+    const [left, width] = calculateMeetingBlock(booking.startTime, booking.endTime, todayTimeStamp);
+    console.log(`會議開始時間:${new Date(booking.startTime)} 會議結束時間:${new Date(booking.endTime)} 預約會議室:${booking.roomId} 預約會議名稱:${booking.title}/
+    \n當天時間:${new Date(todayTimeStamp)}`);
+
+    return {
+        left: left + '%',
+        width: width + '%'
+    }
+}
+
+// 隨機給予一個顏色 style 回傳 backgroud-color: color; 其中 color 是一個色碼，比如說 #E77777
+const timeBlockColors = ['var(--color-primary-blue)', 'var(--color-sucess)', 'var(--color-danger)']
+function generateBackgroundColor(colors: string[]): {'background-color': string} {
+    return {
+        'background-color': colors[Math.floor(Math.random() * colors.length)] as string, 
+    }
+}
+// for (let i=0; i< 10; i++) {
+//     console.log(generateBackgroundColor(timeBlockColors));
+// }
+
 </script>
+
 <template>
   <div class="schedule">
-    <h2>Schedule</h2>
+    <h2 class="heading-secondary">Schedule</h2>
     <div class="block">
       <el-date-picker
         v-model="today"
         type="date"
         placeholder="Pick a day"
         size="default"
-        @change=""
-        :default-time="new Date(Date.now())"
+        @change="consoleSelectTime"
       />
       <el-button type="primary" color="#3B82F6">新增預約</el-button>
     </div>
+
+    <!-- Time line chart -->
     <div class="timeline-chart">
-      <ul>
-        <li v-for="room in useRoomListStore.rooms">
-          <h3>{{ room.name }}</h3>
-          <ul>
-            <li></li>
-          </ul>
-        </li>
+
+        <div class="timeline-chart__time-block-wrapper">
+            <span>Room</span>
+            <ul class="timeline-chart__time-block-list">
+                <li v-for="timeHeader in timeHeaderList" class="timeline-chart__time-block-item">
+                    {{ timeHeader }}
+                </li>
+            </ul>
+        </div>
+
+        <ul class="timeline-chart__room-list">
+
+            <li v-for="room in useRoomListStore.rooms" class="timeline-chart__room-wrapper">
+                <span>{{ room.name }}</span>
+                
+                <ul class="timeline-chart__timeline">
+                    <li v-for="booking in todayBookings.filter( (el) => el.roomId === room.id)">
+                        <div :style="[generateBackgroundColor(timeBlockColors), getBlockStyle(booking)]" class="timeline-chart__time-block">
+                            {{ booking.title }} {{ booking.userId }}
+                        </div>
+                    </li>
+                </ul>
+            </li>
+
       </ul>
     </div>
-    <div>
-      <ul>
-        <li v-for="booking in todayBookings">
-          <span
-            >測試：今天的預約紀錄：{{ booking.title }}
-            {{ booking.userId }}</span
-          >
-        </li>
-      </ul>
-    </div>
+
   </div>
 </template>
+
+<style lang="scss" scoped>
+@use "../assets/variables" as *;
+.timeline-chart {
+    border: 1px solid $color-border;
+    ul {
+        padding-left: 0;
+    }
+
+    // timeline 標題列
+    // time-block-wrapper 的 grid-column 數值設定 會跟 room-wrapper 的 grid-column 數值設定相同，為了讓兩者的對齊
+    // 剛好兩者的
+    &__time-block-wrapper, &__room-wrapper {
+        display: grid;
+        grid-template-columns: 8rem 1fr; // 這邊的 8 rem 等等需要先跟下方的會議室設定相同
+
+        & span {
+            grid-column: 1 / 2;
+            padding: .2rem;
+            border-right: 1px solid $color-text-main;
+        }
+    }
+    &__time-block-list {
+        list-style-type: none;
+        display: flex;
+    }
+    &__time-block-item {
+        background-color: $color-border;
+        font-weight: bold;
+        width: calc(100% / 9);
+        border-right: 1px solid $color-text-main;
+    }
+
+    // room 的項目列 / 時間軸
+    &__room-list {
+        list-style-type: none;
+        display: flex;
+        flex-direction: column;
+    }
+    &__timeline {
+        list-style-type: none;
+        flex: 1 1 auto;
+        position: relative;
+    }
+    &__time-block {
+        position: absolute;
+        height: 100%; // 先設定為這樣，如果之後有問題再調整
+
+    }
+}
+</style>
