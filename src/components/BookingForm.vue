@@ -94,6 +94,9 @@ function addBooking(): void {
     title.value = "";
     startTime.value = "";
     endTime.value = "";
+
+    // closse the dialoa
+    emit("closeDialogBookingForm");
   }
 }
 
@@ -209,7 +212,8 @@ function roomIsUsing(roomId: string): boolean {
   }
 }
 
-// get closeDialogBookingForm function
+// emit closeDialogBookingForm events
+const emit = defineEmits(["closeDialogBookingForm"]);
 </script>
 <template>
   <div>
@@ -277,7 +281,7 @@ function roomIsUsing(roomId: string): boolean {
 
       <el-form-item label-position="right" label-width="">
         <div class="u-margin-left-auto">
-          <el-button @click="$emit('onCloseDialogBookingForm')">取消</el-button>
+          <el-button @click="$emit('closeDialogBookingForm')">取消</el-button>
           <el-button type="primary" @click="addBooking">確認預約</el-button>
         </div>
       </el-form-item>

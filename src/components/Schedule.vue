@@ -159,19 +159,18 @@ function generateBackgroundColor(colors: string[]): {
 
 // control dialoag
 const dialogBookingFormVisible = ref<boolean>(false);
-function closeDialoagBookingForm(): void {
+function handleCloseDialoagBookingForm(): void {
   dialogBookingFormVisible.value = false;
 }
 </script>
 
 <template>
   <div class="schedule">
-    <h2 class="heading-secondary">Schedule</h2>
-    <div class="block">
+    <el-row>
       <el-date-picker
         v-model="today"
         type="date"
-        placeholder="Pick a day"
+        placeholder="選擇預約日期"
         size="default"
         @change="consoleSelectTime"
       />
@@ -181,7 +180,7 @@ function closeDialoagBookingForm(): void {
         @click="dialogBookingFormVisible = true"
         >新增預約</el-button
       >
-    </div>
+    </el-row>
 
     <!-- Time line chart -->
     <div class="timeline-chart">
@@ -232,7 +231,7 @@ function closeDialoagBookingForm(): void {
       destroy-on-close
     >
       <BookingForm
-        @onCloseDialogBookingForm="closeDialoagBookingForm"
+        @closeDialogBookingForm="handleCloseDialoagBookingForm"
       ></BookingForm>
     </el-dialog>
   </div>
