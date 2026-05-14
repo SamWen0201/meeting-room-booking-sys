@@ -6,6 +6,10 @@ import RoomList from './components/RoomList.vue';
 import BookingList from './components/BookingList.vue';
 import { useBookingList } from './stores/bookingListStore';
 import Schedule from './components/Schedule.vue';
+import ElForm from './components/Elcomponents/ElementForm.vue';
+import ElementForm from './components/Elcomponents/ElementForm.vue';
+
+// test element plus components
 
 
 // element plus
@@ -32,9 +36,10 @@ onMounted(async () => {
 
 <template>
   <div>
-    <RoomList></RoomList>
+    <!-- <RoomList></RoomList> -->
     <BookingList></BookingList>
-    <Schedule v-if="dataIsReady"></Schedule>
+    <!-- <Schedule v-if="dataIsReady"></Schedule> -->
+    <!-- <ElementForm></ElementForm> -->
   </div>
 </template>
 
