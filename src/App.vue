@@ -33,8 +33,7 @@ onMounted(async () => {
 <template>
   <div>
     <!-- <RoomList></RoomList> -->
-    <BookingList></BookingList>
-    <!-- <Schedule v-if="dataIsReady"></Schedule> -->
+    <Schedule v-if="dataIsReady"></Schedule>
     <!-- <ElementForm></ElementForm> -->
   </div>
 </template>

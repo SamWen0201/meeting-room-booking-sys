@@ -1,4 +1,7 @@
 <script setup lang="ts">
+// import componentes
+import BookingForm from "./BookingForm.vue";
+
 import { computed, onMounted, ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
@@ -153,9 +156,12 @@ function generateBackgroundColor(colors: string[]): {
     ] as string,
   };
 }
-// for (let i=0; i< 10; i++) {
-//     console.log(generateBackgroundColor(timeBlockColors));
-// }
+
+// control dialoag
+const dialogBookingFormVisible = ref<boolean>(false);
+function closeDialoagBookingForm(): void {
+  dialogBookingFormVisible.value = false;
+}
 </script>
 
 <template>
@@ -169,7 +175,12 @@ function generateBackgroundColor(colors: string[]): {
         size="default"
         @change="consoleSelectTime"
       />
-      <el-button type="primary" color="#3B82F6">新增預約</el-button>
+      <el-button
+        type="primary"
+        color="#3B82F6"
+        @click="dialogBookingFormVisible = true"
+        >新增預約</el-button
+      >
     </div>
 
     <!-- Time line chart -->
@@ -213,6 +224,17 @@ function generateBackgroundColor(colors: string[]): {
         </li>
       </ul>
     </div>
+
+    <!-- BookingForm -->
+    <el-dialog
+      v-model="dialogBookingFormVisible"
+      title="預約會議室"
+      destroy-on-close
+    >
+      <BookingForm
+        @onCloseDialogBookingForm="closeDialoagBookingForm"
+      ></BookingForm>
+    </el-dialog>
   </div>
 </template>
 

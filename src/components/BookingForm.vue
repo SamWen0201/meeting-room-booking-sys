@@ -50,8 +50,6 @@ function combineDateTime(): Date[] {
   return [resultStartTime, resultEndTime];
 }
 
-function cancelBooking(): void {}
-
 function addBooking(): void {
   // 在新增預約紀錄之前，要處理衝突檢測、卡控邏輯
   // 1. 正在被使用的會議室不能預約
@@ -210,17 +208,19 @@ function roomIsUsing(roomId: string): boolean {
     return false;
   }
 }
+
+// get closeDialogBookingForm function
 </script>
 <template>
   <div>
-    <el-form :model="form" style="max-width: 600px">
-      <el-form-item label="會議主題" label-position="top">
+    <el-form :model="form" style="max-width: 600px" label-position="top">
+      <el-form-item label="會議主題" label-position="top" required>
         <el-input v-model="form.title" :maxlength="50" show-word-limit />
       </el-form-item>
 
       <el-row>
         <el-col :span="12">
-          <el-form-item label="日期" label-position="top">
+          <el-form-item label="日期" label-position="top" required>
             <el-date-picker
               v-model="form.date"
               type="date"
@@ -231,8 +231,8 @@ function roomIsUsing(roomId: string): boolean {
         </el-col>
 
         <el-col :span="12">
-          <el-form-item label="時段" label-position="top">
-            <el-col :span="12">
+          <el-form-item label="時段" label-position="top" required>
+            <el-col :span="11">
               <div class="modify-translate-top">
                 <el-time-select
                   v-model="form.startTime"
@@ -245,7 +245,8 @@ function roomIsUsing(roomId: string): boolean {
                 />
               </div>
             </el-col>
-            <el-col :span="12">
+            <el-col class="text-ceter" :span="1">-</el-col>
+            <el-col :span="11">
               <div class="modify-translate-top">
                 <el-time-select
                   v-model="form.endTime"
@@ -261,6 +262,25 @@ function roomIsUsing(roomId: string): boolean {
           </el-form-item>
         </el-col>
       </el-row>
+
+      <el-form-item label="選擇會議室" required>
+        <el-select v-model="roomId" placeholder="Select">
+          <el-option
+            v-for="item in useRoomListStore.rooms"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+            :disabled="roomIsUsing(item.id)"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label-position="right" label-width="">
+        <div class="u-margin-left-auto">
+          <el-button @click="$emit('onCloseDialogBookingForm')">取消</el-button>
+          <el-button type="primary" @click="addBooking">確認預約</el-button>
+        </div>
+      </el-form-item>
     </el-form>
 
     <!-- 我自己寫的 form  -->
@@ -323,7 +343,11 @@ function roomIsUsing(roomId: string): boolean {
   </div>
 </template>
 <style lang="scss">
+// @use "../assets/utilities";
 .modify-translate-top {
   transform: translateY(-2.5px);
+}
+.text-ceter {
+  transform: translateX(0.5rem);
 }
 </style>

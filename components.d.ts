@@ -20,6 +20,7 @@ declare module 'vue' {
     ElCol: typeof import('element-plus/es')['ElCol']
     ElComponent: typeof import('./src/components/Elcomponents/ElComponent.vue')['default']
     ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
+    ElDialog: typeof import('element-plus/es')['ElDialog']
     ElementForm: typeof import('./src/components/Elcomponents/ElementForm.vue')['default']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
