@@ -1,16 +1,15 @@
 <script setup lang="ts">
 // import { RouterLink, RouterView } from 'vue-router'
-import { onMounted, ref } from 'vue';
-import { useRoomList } from './stores/roomList';
-import RoomList from './components/RoomList.vue';
-import BookingList from './components/BookingList.vue';
-import { useBookingList } from './stores/bookingListStore';
-import Schedule from './components/Schedule.vue';
-import ElForm from './components/Elcomponents/ElementForm.vue';
-import ElementForm from './components/Elcomponents/ElementForm.vue';
+import { onMounted, ref } from "vue";
+import { useRoomList } from "./stores/roomList";
+import RoomList from "./components/RoomList.vue";
+import BookingList from "./components/BookingList.vue";
+import { useBookingList } from "./stores/bookingListStore";
+import Schedule from "./components/Schedule.vue";
+import ElForm from "./components/Elcomponents/ElementForm.vue";
+import ElementForm from "./components/Elcomponents/ElementForm.vue";
 
 // test element plus components
-
 
 // element plus
 
@@ -20,7 +19,7 @@ onMounted(async () => {
   // get initial rooms data
   const roomListStore = useRoomList();
   await roomListStore.fetchRooms();
-  console.log("fetch rooms finished!")
+  console.log("fetch rooms finished!");
 
   // get initial bookings data
   const bookingListStore = useBookingList();
@@ -28,10 +27,7 @@ onMounted(async () => {
   console.log("fetch bookings finished!");
 
   dataIsReady.value = true;
-})
-
-
-
+});
 </script>
 
 <template>
@@ -43,5 +39,4 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
