@@ -101,6 +101,8 @@ const todayBookings = computed<Booking[]>(() => {
   });
 });
 
+// userId -> username
+
 // calculateMeetingBlock 這個 function 會在 todayBookings 中的 每一個 booking 跑一次
 // calculateMeetingBlock 接收 booking 的 startTime, endTime 並且跟 todayTime 一起計算出 預約記錄的 block 的 css style left 和 width
 function calculateMeetingBlock(
@@ -143,9 +145,9 @@ function getBlockStyle(booking: Booking): { left: string; width: string } {
 
 // 隨機給予一個顏色 style 回傳 backgroud-color: color; 其中 color 是一個色碼，比如說 #E77777
 const timeBlockColors = [
-  "var(--color-primary-blue)",
-  "var(--color-sucess)",
-  "var(--color-danger)",
+  "var(--color-timeline-primary-blue)",
+  "var(--color-timeline-sucess)",
+  "var(--color-timeline-danger)",
 ];
 function generateBackgroundColor(colors: string[]): {
   "background-color": string;
@@ -166,21 +168,30 @@ function handleCloseDialoagBookingForm(): void {
 
 <template>
   <div class="schedule">
-    <el-row>
-      <el-date-picker
-        v-model="today"
-        type="date"
-        placeholder="選擇預約日期"
-        size="default"
-        @change="consoleSelectTime"
-      />
-      <el-button
-        type="primary"
-        color="#3B82F6"
-        @click="dialogBookingFormVisible = true"
-        >新增預約</el-button
-      >
-    </el-row>
+    <div class="date-picker-wrapper">
+      <el-row justify="space-between">
+          <el-date-picker
+            v-model="today"
+            type="date"
+            placeholder="選擇預約日期"
+            size="default"
+            @change="consoleSelectTime"
+            
+          />
+          <el-button
+            type="primary"
+            color="#3B82F6"
+            @click="dialogBookingFormVisible = true"
+            >
+            <span class="u-margin-right-sm u-flex-center">
+                <el-icon><Plus /></el-icon>
+            </span>
+            新增預約
+            </el-button
+          > 
+        </el-row>
+    </div>
+    
 
     <!-- Time line chart -->
     <div class="timeline-chart">
@@ -203,11 +214,12 @@ function handleCloseDialoagBookingForm(): void {
         >
           <span>{{ room.name }}</span>
 
-          <ul class="timeline-chart__timeline">
+          <ul class="timeline-chart__timeline-list">
             <li
               v-for="booking in todayBookings.filter(
                 (el) => el.roomId === room.id,
               )"
+              class="timeline-chart__timeline-item"
             >
               <div
                 :style="[
@@ -239,8 +251,22 @@ function handleCloseDialoagBookingForm(): void {
 
 <style lang="scss" scoped>
 @use "../assets/variables" as *;
+.schedule {
+  background-color: #fff;
+  padding: $spacing-md;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(#000, .3);
+  font-size: $font-size-body;
+}
+// DATE PICKER
+.date-picker-wrapper {
+  margin-bottom: $spacing-md;
+}
+
+// TIME CHART
 .timeline-chart {
   border: 1px solid $color-border;
+  
   ul {
     padding-left: 0;
   }
@@ -251,7 +277,7 @@ function handleCloseDialoagBookingForm(): void {
   &__time-block-wrapper,
   &__room-wrapper {
     display: grid;
-    grid-template-columns: 8rem 1fr; // 這邊的 8 rem 等等需要先跟下方的會議室設定相同
+    grid-template-columns: 10rem 1fr; // 這邊的 8 rem 等等需要先跟下方的會議室設定相同
 
     & span {
       grid-column: 1 / 2;
@@ -276,14 +302,21 @@ function handleCloseDialoagBookingForm(): void {
     display: flex;
     flex-direction: column;
   }
-  &__timeline {
+  &__timeline-list {
     list-style-type: none;
     flex: 1 1 auto;
     position: relative;
   }
+  &__timeline-item {
+      display: flex;
+  }
   &__time-block {
     position: absolute;
     height: 100%; // 先設定為這樣，如果之後有問題再調整
+    transform: scale(.8);
+    // 先設定字體大小為比較小
+    
+    
   }
 }
 </style>

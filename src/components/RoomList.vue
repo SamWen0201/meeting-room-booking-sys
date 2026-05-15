@@ -13,11 +13,11 @@ import { useBookingList } from "../stores/bookingListStore";
 const roomListStore = useRoomList();
 const bookingListStore = useBookingList();
 
-// show addRoomForm or not
-const addRoomFormIsShow = ref<boolean>(false);
-function showAddRoomForm(): void{
-    addRoomFormIsShow.value = !addRoomFormIsShow.value;
-}
+// // show addRoomForm or not
+// const addRoomFormIsShow = ref<boolean>(false);
+// function showAddRoomForm(): void{
+//     addRoomFormIsShow.value = !addRoomFormIsShow.value;
+// }
 
 // finished later
 function editRoomItem(id: string): void {
@@ -53,23 +53,62 @@ function roomIsUsing(roomId: string): boolean{
     return room ? true : false;
 }
 
+// control dialoag
+const dialogRoomFormVisible = ref<boolean>(false);
+function handleCloseDialoagRoomForm(): void {
+  dialogRoomFormVisible.value = false;
+}
+
 </script>
 <template>
-    <div>
-        <h2>會議室設定</h2>
-        <ul>
-            <li v-for="room in roomListStore.rooms">
-                <span>{{ room.name }}</span>
-                <span>{{ room.capacity }}</span>
-                <ul>
-                    <li v-for="equipment in room.equipments">{{ equipment }}</li>
-                </ul>
-                <button type="button" @click="editRoomItem(room.id)">編輯</button>
-                <button type="button" @click="deleteRoomItem(room.id)">刪除</button>
-            </li>
-        </ul>
-        <button type="button" @click="showAddRoomForm">建立會議室</button>
+    <div class="roomlist">
+        <el-row justify="space-between">
+            <span>
+                會議室設定
+            </span>
+
+            <el-button type="primary" @click="dialogRoomFormVisible = true">
+                <span class="u-margin-right-sm u-flex-center">
+                    <el-icon><Plus /></el-icon>
+                </span>
+                
+                建立會議室
+            </el-button>
+        </el-row>
+        
+        <el-table :data="roomListStore.rooms" style="width: 100%">
+            <el-table-column prop="name" label="名稱" />
+            <el-table-column prop="capacity" label="名稱" width="180" />
+            <el-table-column prop="equipments" label="設備" width="180" />
+            <el-table-column label="操作" width="180">
+                <template #default="scope">
+                    <el-button size="small" type="primary" @click="editRoomItem(scope.row.id)" >
+                       編輯
+                    </el-button>
+                    <el-button size="small" type="danger" @click="deleteRoomItem(scope.row.id)">
+                       刪除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        
     </div>
-    <RoomForm v-if="addRoomFormIsShow"></RoomForm>
+    <el-dialog 
+      v-model="dialogRoomFormVisible"
+      title="建立會議室"
+      destroy-on-close
+    >
+        <RoomForm @closeDialoagRoomForm="handleCloseDialoagRoomForm"></RoomForm>
+    </el-dialog>
     
 </template>
+<style lang="scss" scoped>
+@use '../assets/variables' as *;
+.roomlist {
+    background-color: #fff;
+    padding: $spacing-md;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(#000, .3);
+    font-size: $font-size-body;
+} 
+</style>

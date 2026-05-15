@@ -7,6 +7,11 @@
     --color-text-main: #1F2937;
     --color-slidebar: #111827;
     --color-border: #E5E7EB;
+
+    // TIME LINE BACKGROUND COLORS
+    --color-timeline-primary-blue: #649efa;
+    --color-timeline-sucess: #2ab889;
+    --color-timeline-danger: #ee6161;
 }   
 *, 
 *::before, 
@@ -22,4 +27,9 @@ body {
   box-sizing: border-box;
   font-family: "Noto Sans TC", sans-serif;
   font-weight: $font-weight-body;
+}
+
+.main {
+  background-color: $color-border;
+  color: $color-text-main;
 }

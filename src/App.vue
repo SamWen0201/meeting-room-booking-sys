@@ -66,13 +66,16 @@ onMounted(async () => {
   padding: $spacing-md;
   &__link {
     color: $color-border;
+    text-decoration: none;
+    transition: all .3s;
+    &.router-link-exact-active {
+      background-color: $color-primary-blue;
+    }
   }
 }
 .header {
   padding: $spacing-lg;
   height: auto;
 }
-.main {
-  background-color: $color-border;
-}
+
 </style>

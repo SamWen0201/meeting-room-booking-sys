@@ -70,12 +70,12 @@ const users: User[] = [
   {
     id: "1",
     role: "admin",
-    name: "SamWen",
+    name: "Sam Wen",
   },
   {
     id: "2",
     role: "normal",
-    name: "JohnW",
+    name: "John Wick",
   },
 ];
 
