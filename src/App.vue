@@ -36,8 +36,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-container>
-    <el-aside width="240px" class="aside">
+  <el-container class="whole-container">
+    <el-aside class="aside">
       <nav class="nav">
         <RouterLink to="/" class="nav__link">日程總覽</RouterLink>
         <RouterLink to="/room-management" class="nav__link"
@@ -60,10 +60,13 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 @use "../src/assets/variables" as *;
+
 .aside {
   background-color: $color-slidebar;
   height: 100vh;
+  width: 24rem;
 }
+
 .nav {
   display: flex;
   flex-direction: column;
@@ -86,5 +89,22 @@ onMounted(async () => {
   padding: $spacing-lg;
   height: auto;
 }
+
+@media (max-width: 75em) { // 1200px
+  .whole-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .aside {
+    height: auto;
+    width: 100%;
+  }
+
+  .nav {
+    flex-direction:row;
+  }
+}
+
 
 </style>
