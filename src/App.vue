@@ -78,6 +78,7 @@ onMounted(async () => {
     padding: $spacing-xs;
     &.router-link-exact-active {
       background-color: $color-primary-blue;
+      transform: scale(1.05);
     }
   }
 }

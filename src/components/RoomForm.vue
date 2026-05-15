@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 
 // stores
 import { useRoomList } from "@/stores/roomList";
+import type { Room } from "@/types";
 
 const roomListStore = useRoomList();
 
 // bookingForm state
 const name = ref("");
 const capacity = ref(10);
-const equipments = ref([]);
+const equipments = ref<string[]>([]);
 
 const roomAddForm = reactive({
   name,
@@ -18,6 +19,7 @@ const roomAddForm = reactive({
 })
 
 function addRoom():void {
+
   if(roomFormIsValid()) {
     roomListStore.addRoom({
     id: crypto.randomUUID(),
@@ -49,10 +51,89 @@ function roomFormIsValid(): boolean {
 // define closeDialog emits
 const emit = defineEmits(['closeDialoagRoomForm']);
 
+// define props
+const props = defineProps<{editData?: Room}>();
+console.log(props.editData);
+
+// 透過 editData 的值 來決定目前是 新增模式 或 編輯模式
+const isEditing = computed<boolean>(() => {
+  return props.editData?.id ? true : false;
+})
+// 將獲得的 porps.editData 填入表格中
+function fillInEditData(): void {
+  if (isEditing.value) {
+    console.log('Edit mode!');
+    roomAddForm.name = props.editData?.name || ''; // 先讓 roomAddForm.name 一定會有值，就算是 空值
+    roomAddForm.capacity = props.editData?.capacity || 0;
+    roomAddForm.equipments = props.editData?.equipments || [];
+  }else {
+    console.log('Add mode!');
+  }
+}
+// 在 Modal 顯示的當下就呼叫，填滿表格資料
+onMounted(() => {
+  fillInEditData();
+})
+
+// 使用者按下 確認編輯按鈕 則編輯完畢。
+function editRoom(): void { 
+    if (roomFormIsValid()) {
+      roomListStore.rooms.map( (el) => {
+        if (el.id === props.editData?.id) {
+          el.name = roomAddForm.name;
+          el.capacity = roomAddForm.capacity;
+          el.equipments = roomAddForm.equipments;
+        }
+        return el;
+      })
+       // remove the input
+      name.value = "";
+      capacity.value = 0;
+      equipments.value = [];
+
+      emit('closeDialoagRoomForm');
+    }else {
+      // 需要再做 notifications
+      return;
+    }
+}
 
 </script>
 <template>
-  <el-form :model="roomAddForm" label-position="top">
+  <!-- EDIT FORM -->
+  <el-form :model="roomAddForm" label-position="top" v-if="isEditing">
+    <el-form-item label="會議室名稱">
+      <el-input v-model="roomAddForm.name" />
+    </el-form-item>
+
+    <el-form-item label="容納人數">
+      <el-input type="number" v-model="roomAddForm.capacity" />
+    </el-form-item>
+
+    <el-form-item label="設備">
+      <el-checkbox-group v-model="equipments">
+        <el-checkbox value="白板" name="equipment">
+          白板
+        </el-checkbox>
+        <el-checkbox value="投影機" name="equipment">
+          投影機
+        </el-checkbox>
+        <el-checkbox value="雷射筆" name="equipment">
+          雷射筆
+        </el-checkbox>
+      </el-checkbox-group>
+    </el-form-item>
+
+    <el-form-item>
+      <div class="u-margin-left-auto">
+        <el-button @click="$emit('closeDialoagRoomForm')">取消</el-button>
+        <el-button type="primary" @click="editRoom">確認編輯</el-button>
+      </div>
+    </el-form-item>
+  </el-form>
+
+  <!-- ADD FORM -->
+  <el-form :model="roomAddForm" label-position="top" v-else>
     <el-form-item label="會議室名稱">
       <el-input v-model="roomAddForm.name" />
     </el-form-item>
@@ -83,31 +164,4 @@ const emit = defineEmits(['closeDialoagRoomForm']);
     </el-form-item>
   </el-form>
 
-  <!-- my form -->
-  <!-- <form action="#" @submit.prevent="addRoom">
-    <label for="name">會議室名稱:</label>
-    <input v-model="name" id="name" required/>
-    <label for="capacity">容納人數:</label>
-    <input type="number" min="0" v-model.number="capacity" id="capacity" required/>
-
-    <div>設備:</div>
-    <input
-      type="checkbox"
-      v-model="equipments"
-      value="白板"
-      id="whiteboard"
-    />
-    <label for="whiteboard">白板</label>
-    <input
-      type="checkbox"
-      v-model="equipments"
-      value="投影機"
-      id="projecter"
-    />
-    <label for="projecter">投影機</label>
-    <input type="checkbox" v-model="equipments" value="雷射筆" id="pen" />
-    <label for="pen">雷射筆</label>
-
-    <button>確認新增</button>
-  </form> -->
 </template>

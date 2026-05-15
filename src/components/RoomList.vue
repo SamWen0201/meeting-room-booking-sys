@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Room } from '@/types';
-import { onMounted, ref } from 'vue';
+import { ref, reactive } from 'vue';
 
 // components
 import RoomForm from './RoomForm.vue';
@@ -19,14 +19,43 @@ const bookingListStore = useBookingList();
 //     addRoomFormIsShow.value = !addRoomFormIsShow.value;
 // }
 
-// finished later
+
+// 儲存 目前點選編輯的會議室資料，在之後要傳給 RoomForm
+// 既然這只是需要一次傳值?是否需要建立成 state，需要? 因為當使用者點選編輯其他資料的時候，資料同時也要轉變?
+
+// 思考問題，要怎麼讓 RoomForm 知道，現在是新增還是編輯，因為目前在 RoomForm 如果點下確認新增，是會新增一個會議室，而不是更新 
+// 檢查目前的狀態有沒有 roomId ，因為 roomId 是新增之後才有的
+// 因為在 RoomForm 裡面 更新模式是透過有沒有接收到 父元素傳遞 editData 這個 prop 來決定的，所以在 RoomForm 裡面更新完畢之後要記得清空 editData
+
+const roomEditData = reactive<Room>({
+    id: '', 
+    name: '', 
+    capacity: 0, 
+    equipments:[]});
+
 function editRoomItem(id: string): void {
     if (roomIsUsing(id)) {
         console.log("Room is using or will use in the future. You can't edit the room. ");
         return;
     }else {
         // edit the room
+        const editRoom = roomListStore.rooms.find( (el) => el.id === id);
+        Object.assign(roomEditData, editRoom);
+
+        dialogRoomFormVisible.value = true; // open the dialog
+
+        // 因為 RoomForm 是子元素，所以這邊打開表格之後沒有辦法將目前表格的狀態填入表格
+        // 其實應該可以? 只是需要將屬性傳遞下去
     }
+}
+
+function resetRoomEditData(): void {
+    roomEditData.id = '';
+    roomEditData.name = '';
+    roomEditData.capacity = 0;
+    roomEditData.equipments = [];
+
+    console.log(roomEditData);
 }
 
 function deleteRoomItem(id: string): void{
@@ -78,7 +107,7 @@ function handleCloseDialoagRoomForm(): void {
         
         <el-table :data="roomListStore.rooms" style="width: 100%">
             <el-table-column prop="name" label="名稱" />
-            <el-table-column prop="capacity" label="名稱" width="180" />
+            <el-table-column prop="capacity" label="人數" width="180" />
             <el-table-column prop="equipments" label="設備" width="180" />
             <el-table-column label="操作" width="180">
                 <template #default="scope">
@@ -99,12 +128,14 @@ function handleCloseDialoagRoomForm(): void {
         </el-table>
         
     </div>
+
     <el-dialog 
       v-model="dialogRoomFormVisible"
-      title="建立會議室"
+      :title="`${roomEditData.id ? '編輯會議室' : '建立會議室'}`"
       destroy-on-close
+      @close="resetRoomEditData"
     >
-        <RoomForm @closeDialoagRoomForm="handleCloseDialoagRoomForm"></RoomForm>
+        <RoomForm @closeDialoagRoomForm="handleCloseDialoagRoomForm" :editData="roomEditData"></RoomForm>
     </el-dialog>
     
 </template>

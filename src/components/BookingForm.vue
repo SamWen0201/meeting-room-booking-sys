@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, reactive } from "vue";
+import { ref, reactive } from "vue";
 
 import type { Booking } from "@/types";
-import type { Room } from "@/types";
+
+// import rulesForm instance 
+import type { FormInstance } from "element-plus";
 
 // import store
 import { useRoomList } from "@/stores/roomList";
@@ -25,6 +27,35 @@ const form = reactive({
   endTime,
   roomId,
 });
+
+
+const props = defineProps<{todayDateInMidNight: Date | null}>();
+if (props.todayDateInMidNight) {
+  date.value = props.todayDateInMidNight;
+}
+
+
+// handle formRules
+const bookingFormRef = ref<FormInstance>();
+
+const formRules = reactive({
+  title: [
+    {required: true, message: "必須輸入會議主題", trigger:'blur'},
+    {min: 2, max: 50, message: '會議主題長度必須介於 2~50 字', trigger: 'blur'}
+  ],
+  date: [
+    {type: 'date', required: true, message: "必須輸入日期", trigger:'change'},
+  ],
+  startTime: [
+    {type: 'string', required: true, message: "必須輸入開始時間", trigger:'change'},
+  ],
+  endTime: [
+    {type: 'string', required: true, message: "必須輸入結束時間", trigger:'change'},
+  ],
+  roomId: [
+    {required: true, message: "必須選擇會議室", trigger:'change'},
+  ]
+})
 
 function combineDateTime(): Date[] {
   // 思考 combineDateTime 的執行時間，
@@ -50,7 +81,7 @@ function combineDateTime(): Date[] {
   return [resultStartTime, resultEndTime];
 }
 
-function addBooking(): void {
+async function addBooking(): Promise<void> {
   // 在新增預約紀錄之前，要處理衝突檢測、卡控邏輯
   // 1. 正在被使用的會議室不能預約
   // 2. 最小預約單位為 30 分鐘 -> 也就是只能以 30 60 90 分鐘去預約，不能預約 27 3 45
@@ -64,7 +95,16 @@ function addBooking(): void {
   // 會議主題：長度限制 2-50 字元。
   // 容納人數：必須為正整數。
 
-  if (
+  // 增加 el-form 驗證邏輯
+  if (!bookingFormRef.value) return;
+
+  await bookingFormRef.value.validate((valid) => {
+    if (!valid) {
+      console.log('表單驗證失敗');
+      return;
+    }
+
+    if (
     !titleIsValid() ||
     !durationIsValid() ||
     !dateIsValid() ||
@@ -98,6 +138,9 @@ function addBooking(): void {
     // closse the dialoa
     emit("closeDialogBookingForm");
   }
+
+  })
+  
 }
 
 // 輸入限制：
@@ -214,45 +257,49 @@ function roomIsUsing(roomId: string): boolean {
 
 // emit closeDialogBookingForm events
 const emit = defineEmits(["closeDialogBookingForm"]);
+
+
 </script>
 <template>
   <div>
-    <el-form :model="form" label-position="top">
-      <el-form-item label="會議主題" label-position="top" required>
+    <el-form :model="form" :rules="formRules" label-position="top" ref="bookingFormRef">
+      <el-form-item label="會議主題" label-position="top" prop="title">
         <el-input v-model="form.title" :maxlength="50" show-word-limit />
       </el-form-item>
 
       <el-row>
         <el-col :span="12">
-          <el-form-item label="日期" label-position="top" required>
+          <el-form-item label="日期" label-position="top" prop="date">
             <el-date-picker
               v-model="form.date"
               type="date"
               placeholder="Pick a day"
-              required
             />
           </el-form-item>
         </el-col>
 
         <el-col :span="12">
-          <el-form-item label="時段" label-position="top" required>
+          <el-form-item label="時段" label-position="top">
             <el-col :span="11">
               <div class="modify-translate-top">
-                <el-time-select
-                  v-model="form.startTime"
-                  :max-time="endTime"
-                  placeholder="Start time"
-                  start="09:00"
-                  step="00:30"
-                  end="17:30"
-                  required
-                />
+                <el-form-item prop="startTime">
+                    <el-time-select
+                    v-model="form.startTime"
+                    :max-time="endTime"
+                    placeholder="Start time"
+                    start="09:00"
+                    step="00:30"
+                    end="17:30"
+                    required
+                  />
+                </el-form-item>
               </div>
             </el-col>
             <el-col class="text-ceter" :span="1">-</el-col>
             <el-col :span="11">
               <div class="modify-translate-top">
-                <el-time-select
+                <el-form-item prop="endTime">
+                  <el-time-select
                   v-model="form.endTime"
                   :min-time="startTime"
                   placeholder="End time"
@@ -261,14 +308,15 @@ const emit = defineEmits(["closeDialogBookingForm"]);
                   end="18:00"
                   required
                 />
+                </el-form-item>
               </div>
             </el-col>
           </el-form-item>
         </el-col>
       </el-row>
 
-      <el-form-item label="選擇會議室" required>
-        <el-select v-model="roomId" placeholder="Select">
+      <el-form-item label="選擇會議室" prop="roomId">
+        <el-select v-model="roomId" placeholder="Select" >
           <el-option
             v-for="item in useRoomListStore.rooms"
             :key="item.id"
@@ -287,63 +335,6 @@ const emit = defineEmits(["closeDialogBookingForm"]);
       </el-form-item>
     </el-form>
 
-    <!-- 我自己寫的 form  -->
-    <!-- <form action="#" @submit.prevent="addBooking">
-      <label for="title">會議主題</label>
-      <input
-        type="text"
-        id="title"
-        v-model="title"
-        required
-        minlength="2"
-        maxlength="50"
-      />
-
-      <label for="date">日期</label>
-      <el-date-picker
-        v-model="date"
-        type="date"
-        placeholder="Pick a day"
-        required
-      />
-
-      <div class="demo-time-range flex flex-wrap gap-4">
-        <label for="date">時段</label>
-        <el-time-select
-          v-model="startTime"
-          style="width: 240px"
-          :max-time="endTime"
-          placeholder="Start time"
-          start="09:00"
-          step="00:30"
-          end="17:30"
-          required
-        />
-        <el-time-select
-          v-model="endTime"
-          style="width: 240px"
-          :min-time="startTime"
-          placeholder="End time"
-          :start="startTime"
-          step="00:30"
-          end="18:00"
-          required
-        />
-      </div>
-
-      <el-select v-model="roomId" placeholder="Select" style="width: 240px">
-        <el-option
-          v-for="item in useRoomListStore.rooms"
-          :key="item.id"
-          :label="item.name"
-          :value="item.id"
-          :disabled="roomIsUsing(item.id)"
-        />
-      </el-select>
-
-      <button type="button" @click="cancelBooking">取消</button>
-      <button type="button" @click="addBooking">確認預約</button>
-    </form> -->
   </div>
 </template>
 <style lang="scss">

@@ -42,6 +42,7 @@ declare module 'vue' {
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTimePicker: typeof import('element-plus/es')['ElTimePicker']
     ElTimeSelect: typeof import('element-plus/es')['ElTimeSelect']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     RoomForm: typeof import('./src/components/RoomForm.vue')['default']
     RoomList: typeof import('./src/components/RoomList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

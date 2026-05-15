@@ -13,9 +13,17 @@ const useBookingListStore = useBookingList();
 const useUserStore = useUser();
 
 const today = ref("");
-function consoleSelectTime() {
-  console.log(new Date(today.value));
-}
+
+// 計算出今天的 00:00 分，該值要被傳入 BookingForm
+const todayDateInMidNight = computed(() => {
+    const todayDate = new Date(today.value);
+    const year = todayDate.getFullYear();
+    const month = todayDate.getMonth();
+    const day = todayDate.getDate();
+
+    return today.value ? new Date(year, month, day): null;
+})
+
 // 先計算一天 9:00-18:00 之間可以分為多少 30分鐘
 // 後來用總共時間計算之後，就不需要這個 function 了
 function calculateTimeBlock(
@@ -78,9 +86,8 @@ function calculateTimeLineHeaderList(
   return timeLineHeaderList;
 }
 const timeHeaderList = calculateTimeLineHeaderList("09:00", "18:00");
-console.log(timeHeaderList);
+// console.log(timeHeaderList);
 
-// 根據 Schedule 的 today state 來決定 roomIsUsingArr  各元素的 truthy value
 // 1. 先獲得今天的 預約紀錄 -> 今天 + 1 天，怎麼去找到屬於這一天的紀錄
 const todayBookings = computed<Booking[]>(() => {
   // 將預約紀錄的日期等於今天日期的所有預約紀錄計算出來
@@ -140,8 +147,8 @@ function getBlockStyle(booking: Booking): { left: string; width: string } {
     booking.endTime,
     todayTimeStamp,
   );
-  console.log(`會議開始時間:${new Date(booking.startTime)} 會議結束時間:${new Date(booking.endTime)} 預約會議室:${booking.roomId} 預約會議名稱:${booking.title}/
-    \n當天時間:${new Date(todayTimeStamp)}`);
+  // console.log(`會議開始時間:${new Date(booking.startTime)} 會議結束時間:${new Date(booking.endTime)} 預約會議室:${booking.roomId} 預約會議名稱:${booking.title}/
+  //   \n當天時間:${new Date(todayTimeStamp)}`);
 
   return {
     left: left + "%",
@@ -165,6 +172,21 @@ function generateBackgroundColor(colors: string[]): {
   };
 }
 
+// getTimeBlockInfo 獲得當前 time block 的詳細資訊:包含 會議主題、開始時間到結束時間、會議時長、預約人
+function getTimeBlockInfo(booking: Booking) {
+  const startTimeHour: number = new Date(booking.startTime).getHours();
+  const startTimeMinute: number = new Date(booking.startTime).getMinutes();
+
+  const durationHour: number = Math.floor((booking.endTime - booking.startTime) / 1000 / 60 / 60);
+  const durationMinute: number =  (booking.endTime - booking.startTime) / 1000 / 60 % 60;
+  
+  
+
+  return `會議主題:${booking.title}, 預約人:${getUserName(booking.userId)}, 
+   開始時間:${startTimeHour}:${startTimeMinute ? startTimeMinute : '00'},
+   會議時長:${durationHour}時${durationMinute}分鐘,`;
+}
+
 // control dialoag
 const dialogBookingFormVisible = ref<boolean>(false);
 function handleCloseDialoagBookingForm(): void {
@@ -180,10 +202,8 @@ function handleCloseDialoagBookingForm(): void {
           <el-date-picker
             v-model="today"
             type="date"
-            placeholder="選擇預約日期"
+            placeholder="選擇日期"
             size="default"
-            @change="consoleSelectTime"
-            
           />
           <el-button
             type="primary"
@@ -219,7 +239,7 @@ function handleCloseDialoagBookingForm(): void {
           v-for="room in useRoomListStore.rooms"
           class="timeline-chart__room-wrapper"
         >
-          <span class="timeline-chart__timeline-titles">{{ room.name }}</span>
+          <span class="timeline-chart__timeline-title">{{ room.name }}</span>
 
           <ul class="timeline-chart__timeline-list">
             <li
@@ -228,18 +248,22 @@ function handleCloseDialoagBookingForm(): void {
               )"
               class="timeline-chart__timeline-item"
             >
-              <div
-                :style="[
-                  generateBackgroundColor(timeBlockColors),
-                  getBlockStyle(booking),
-                ]"
-                class="timeline-chart__time-block"
-              >
-                <span class="timeline-chart__time-block-text">
-                  {{ booking.title }} {{ getUserName(booking.userId) }}
-                </span>
-                
-              </div>
+            <!-- timeline-chart__time-block 為顯示預約會議時間段和文字的內容 -->
+              <el-tooltip effect="dark" placement="bottom" :content="getTimeBlockInfo(booking)" >
+                  <div
+                    :style="[
+                      generateBackgroundColor(timeBlockColors),
+                      getBlockStyle(booking),
+                    ]"
+                    class="timeline-chart__time-block"
+                  >
+                    <span class="timeline-chart__time-block-text">
+                      {{ booking.title }} {{ getUserName(booking.userId) }}
+                    </span>
+                    
+                  </div>
+              </el-tooltip>
+              
             </li>
           </ul>
         </li>
@@ -254,6 +278,7 @@ function handleCloseDialoagBookingForm(): void {
     >
       <BookingForm
         @closeDialogBookingForm="handleCloseDialoagBookingForm"
+        :todayDateInMidNight="todayDateInMidNight"
       ></BookingForm>
     </el-dialog>
   </div>
@@ -289,11 +314,11 @@ function handleCloseDialoagBookingForm(): void {
   &__time-block-wrapper,
   &__room-wrapper {
     display: grid;
-    grid-template-columns: 10rem 1fr; // 這邊的 8 rem 等等需要先跟下方的會議室設定相同
+    grid-template-columns: minmax(10rem, min-content) 1fr; // 這邊的 8 rem 等等需要先跟下方的會議室設定相同
 
     & span {
       grid-column: 1 / 2;
-      padding: 0.2rem;
+      padding: $spacing-xs
       // border-right: 1px solid $color-text-main;
     }
   }
@@ -322,7 +347,7 @@ function handleCloseDialoagBookingForm(): void {
     display: flex;
     flex-direction: column;
   }
-  &__timeline-titles {
+  &__timeline-title {
     border-right: 1px solid $color-text-main;
   }
   &__timeline-list {
@@ -344,6 +369,10 @@ function handleCloseDialoagBookingForm(): void {
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: all .3s;
+    &:hover {
+      cursor: pointer;
+    }
   }
   &__time-block-text {
     overflow: hidden;
