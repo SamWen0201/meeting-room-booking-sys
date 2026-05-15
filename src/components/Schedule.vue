@@ -6,8 +6,11 @@ import { computed, onMounted, ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
 import type { Booking } from "@/types";
+import { useUser } from "@/stores/userStore";
+
 const useRoomListStore = useRoomList();
 const useBookingListStore = useBookingList();
+const useUserStore = useUser();
 
 const today = ref("");
 function consoleSelectTime() {
@@ -101,7 +104,10 @@ const todayBookings = computed<Booking[]>(() => {
   });
 });
 
-// userId -> username
+// getUserName 獲得 booking.userId 對應的 userName
+function getUserName(userId: string): string {
+  return useUserStore.users.find( (el) => el.id === userId)!.name;
+}
 
 // calculateMeetingBlock 這個 function 會在 todayBookings 中的 每一個 booking 跑一次
 // calculateMeetingBlock 接收 booking 的 startTime, endTime 並且跟 todayTime 一起計算出 預約記錄的 block 的 css style left 和 width
@@ -164,6 +170,7 @@ const dialogBookingFormVisible = ref<boolean>(false);
 function handleCloseDialoagBookingForm(): void {
   dialogBookingFormVisible.value = false;
 }
+
 </script>
 
 <template>
@@ -196,7 +203,7 @@ function handleCloseDialoagBookingForm(): void {
     <!-- Time line chart -->
     <div class="timeline-chart">
       <div class="timeline-chart__time-block-wrapper">
-        <span>Room</span>
+        <span class="timeline-chart__time-block-title">Room</span>
         <ul class="timeline-chart__time-block-list">
           <li
             v-for="timeHeader in timeHeaderList"
@@ -212,7 +219,7 @@ function handleCloseDialoagBookingForm(): void {
           v-for="room in useRoomListStore.rooms"
           class="timeline-chart__room-wrapper"
         >
-          <span>{{ room.name }}</span>
+          <span class="timeline-chart__timeline-titles">{{ room.name }}</span>
 
           <ul class="timeline-chart__timeline-list">
             <li
@@ -228,7 +235,10 @@ function handleCloseDialoagBookingForm(): void {
                 ]"
                 class="timeline-chart__time-block"
               >
-                {{ booking.title }} {{ booking.userId }}
+                <span class="timeline-chart__time-block-text">
+                  {{ booking.title }} {{ getUserName(booking.userId) }}
+                </span>
+                
               </div>
             </li>
           </ul>
@@ -266,6 +276,8 @@ function handleCloseDialoagBookingForm(): void {
 // TIME CHART
 .timeline-chart {
   border: 1px solid $color-border;
+  border-top: none;
+  border-radius: 3px;
   
   ul {
     padding-left: 0;
@@ -282,8 +294,13 @@ function handleCloseDialoagBookingForm(): void {
     & span {
       grid-column: 1 / 2;
       padding: 0.2rem;
-      border-right: 1px solid $color-text-main;
+      // border-right: 1px solid $color-text-main;
     }
+  }
+  // 標題列
+  &__time-block-title {
+    background-color: $color-border;
+    border-right: 1px solid $color-text-main;
   }
   &__time-block-list {
     list-style-type: none;
@@ -293,7 +310,10 @@ function handleCloseDialoagBookingForm(): void {
     background-color: $color-border;
     font-weight: bold;
     width: calc(100% / 9);
-    border-right: 1px solid $color-text-main;
+    &:not(:last-child) {
+      border-right: 1px solid $color-text-main;
+    }
+    padding-left: $spacing-md;
   }
 
   // room 的項目列 / 時間軸
@@ -301,6 +321,9 @@ function handleCloseDialoagBookingForm(): void {
     list-style-type: none;
     display: flex;
     flex-direction: column;
+  }
+  &__timeline-titles {
+    border-right: 1px solid $color-text-main;
   }
   &__timeline-list {
     list-style-type: none;
@@ -313,10 +336,19 @@ function handleCloseDialoagBookingForm(): void {
   &__time-block {
     position: absolute;
     height: 100%; // 先設定為這樣，如果之後有問題再調整
-    transform: scale(.8);
+    transform: scaleY(.9);
     // 先設定字體大小為比較小
-    
-    
+    font-weight: $font-weight-title;
+    color: $color-text-main;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  &__time-block-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }
 </style>

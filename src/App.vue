@@ -3,6 +3,7 @@
 import { onMounted, ref } from "vue";
 import { useRoomList } from "./stores/roomList";
 import { useBookingList } from "./stores/bookingListStore";
+import { useUser } from "./stores/userStore";
 
 // import route
 import { useRoute } from "vue-router";
@@ -24,6 +25,11 @@ onMounted(async () => {
   const bookingListStore = useBookingList();
   await bookingListStore.fetchBookings();
   console.log("fetch bookings finished!");
+
+  // get initial users data
+  const userStore = useUser();
+  await userStore.fetchUsers();
+  console.log('fetch users finished!');
 
   dataIsReady.value = true;
 });
@@ -68,6 +74,8 @@ onMounted(async () => {
     color: $color-border;
     text-decoration: none;
     transition: all .3s;
+    border-radius: 2px;
+    padding: $spacing-xs;
     &.router-link-exact-active {
       background-color: $color-primary-blue;
     }

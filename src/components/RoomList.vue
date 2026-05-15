@@ -67,7 +67,7 @@ function handleCloseDialoagRoomForm(): void {
                 會議室設定
             </span>
 
-            <el-button type="primary" @click="dialogRoomFormVisible = true">
+            <el-button type="primary" color="#3B82F6" @click="dialogRoomFormVisible = true">
                 <span class="u-margin-right-sm u-flex-center">
                     <el-icon><Plus /></el-icon>
                 </span>
@@ -82,11 +82,17 @@ function handleCloseDialoagRoomForm(): void {
             <el-table-column prop="equipments" label="設備" width="180" />
             <el-table-column label="操作" width="180">
                 <template #default="scope">
-                    <el-button size="small" type="primary" @click="editRoomItem(scope.row.id)" >
-                       編輯
+                    <el-button size="small" type="primary" color="#3B82F6" @click="editRoomItem(scope.row.id)" >
+                        <span class="u-margin-right-sm u-flex-center">
+                            <el-icon><Edit /></el-icon>
+                        </span>
+                        編輯
                     </el-button>
-                    <el-button size="small" type="danger" @click="deleteRoomItem(scope.row.id)">
-                       刪除
+                    <el-button size="small" type="danger" color="#EF4444" @click="deleteRoomItem(scope.row.id)">
+                         <span class="u-margin-right-sm u-flex-center">
+                            <el-icon><Delete /></el-icon>
+                        </span> 
+                        刪除
                     </el-button>
                 </template>
             </el-table-column>

@@ -217,7 +217,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
 </script>
 <template>
   <div>
-    <el-form :model="form" style="max-width: 600px" label-position="top">
+    <el-form :model="form" label-position="top">
       <el-form-item label="會議主題" label-position="top" required>
         <el-input v-model="form.title" :maxlength="50" show-word-limit />
       </el-form-item>

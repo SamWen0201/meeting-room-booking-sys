@@ -90,3 +90,7 @@ Mock.mock("/api/v1/rooms", "get", () => {
 Mock.mock("/api/v1/bookings", "get", () => {
   return bookings;
 });
+
+Mock.mock('/api/v1/users', 'get', () => {
+  return users;
+})
