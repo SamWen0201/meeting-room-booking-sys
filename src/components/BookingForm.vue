@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, watch } from "vue";
 
 import type { Booking } from "@/types";
 
-// import rulesForm instance 
+// import rulesForm instance
 import type { FormInstance } from "element-plus";
 
 // import store
@@ -28,34 +28,70 @@ const form = reactive({
   roomId,
 });
 
-
-const props = defineProps<{todayDateInMidNight: Date | null}>();
+const props = defineProps<{
+  todayDateInMidNight: Date | null;
+  prefilledRoomId: string;
+  prefilledStartTime: string;
+}>();
 if (props.todayDateInMidNight) {
   date.value = props.todayDateInMidNight;
 }
-
+watch(
+  () => props.prefilledRoomId,
+  (val) => {
+    console.log(`${val} is existed`);
+    if (val) roomId.value = val;
+  },
+  { immediate: true },
+);
+watch(
+  () => props.prefilledStartTime,
+  (val) => {
+    console.log(`${val} is existed`);
+    if (val) startTime.value = val;
+  },
+  { immediate: true },
+);
 
 // handle formRules
 const bookingFormRef = ref<FormInstance>();
 
 const formRules = reactive({
   title: [
-    {required: true, message: "必須輸入會議主題", trigger:'blur'},
-    {min: 2, max: 50, message: '會議主題長度必須介於 2~50 字', trigger: 'blur'}
+    { required: true, message: "必須輸入會議主題", trigger: "blur" },
+    {
+      min: 2,
+      max: 50,
+      message: "會議主題長度必須介於 2~50 字",
+      trigger: "blur",
+    },
   ],
   date: [
-    {type: 'date', required: true, message: "必須輸入日期", trigger:'change'},
+    {
+      type: "date",
+      required: true,
+      message: "必須輸入日期",
+      trigger: "change",
+    },
   ],
   startTime: [
-    {type: 'string', required: true, message: "必須輸入開始時間", trigger:'change'},
+    {
+      type: "string",
+      required: true,
+      message: "必須輸入開始時間",
+      trigger: "change",
+    },
   ],
   endTime: [
-    {type: 'string', required: true, message: "必須輸入結束時間", trigger:'change'},
+    {
+      type: "string",
+      required: true,
+      message: "必須輸入結束時間",
+      trigger: "change",
+    },
   ],
-  roomId: [
-    {required: true, message: "必須選擇會議室", trigger:'change'},
-  ]
-})
+  roomId: [{ required: true, message: "必須選擇會議室", trigger: "change" }],
+});
 
 function combineDateTime(): Date[] {
   // 思考 combineDateTime 的執行時間，
@@ -100,47 +136,45 @@ async function addBooking(): Promise<void> {
 
   await bookingFormRef.value.validate((valid) => {
     if (!valid) {
-      console.log('表單驗證失敗');
+      console.log("表單驗證失敗");
       return;
     }
 
     if (
-    !titleIsValid() ||
-    !durationIsValid() ||
-    !dateIsValid() ||
-    !roomId.value
-  ) {
-    // addBooking
-    console.log("Booking failed! Booking is invalid!");
-    return;
-  } else {
-    const [bookingStartTime, bookingEndTime] = combineDateTime() as [
-      Date,
-      Date,
-    ];
+      !titleIsValid() ||
+      !durationIsValid() ||
+      !dateIsValid() ||
+      !roomId.value
+    ) {
+      // addBooking
+      console.log("Booking failed! Booking is invalid!");
+      return;
+    } else {
+      const [bookingStartTime, bookingEndTime] = combineDateTime() as [
+        Date,
+        Date,
+      ];
 
-    const newBooking: Booking = {
-      id: crypto.randomUUID(),
-      roomId: roomId.value,
-      userId: "1",
-      title: title.value,
-      startTime: bookingStartTime?.getTime(),
-      endTime: bookingEndTime?.getTime(),
-    };
-    useBookingListStore.addBooking(newBooking);
+      const newBooking: Booking = {
+        id: crypto.randomUUID(),
+        roomId: roomId.value,
+        userId: "1",
+        title: title.value,
+        startTime: bookingStartTime?.getTime(),
+        endTime: bookingEndTime?.getTime(),
+      };
+      useBookingListStore.addBooking(newBooking);
 
-    // remove the input
-    roomId.value = "";
-    title.value = "";
-    startTime.value = "";
-    endTime.value = "";
+      // remove the input
+      roomId.value = "";
+      title.value = "";
+      startTime.value = "";
+      endTime.value = "";
 
-    // closse the dialoa
-    emit("closeDialogBookingForm");
-  }
-
-  })
-  
+      // closse the dialoa
+      emit("closeDialogBookingForm");
+    }
+  });
 }
 
 // 輸入限制：
@@ -257,12 +291,15 @@ function roomIsUsing(roomId: string): boolean {
 
 // emit closeDialogBookingForm events
 const emit = defineEmits(["closeDialogBookingForm"]);
-
-
 </script>
 <template>
   <div>
-    <el-form :model="form" :rules="formRules" label-position="top" ref="bookingFormRef">
+    <el-form
+      :model="form"
+      :rules="formRules"
+      label-position="top"
+      ref="bookingFormRef"
+    >
       <el-form-item label="會議主題" label-position="top" prop="title">
         <el-input v-model="form.title" :maxlength="50" show-word-limit />
       </el-form-item>
@@ -283,7 +320,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
             <el-col :span="11">
               <div class="modify-translate-top">
                 <el-form-item prop="startTime">
-                    <el-time-select
+                  <el-time-select
                     v-model="form.startTime"
                     :max-time="endTime"
                     placeholder="Start time"
@@ -300,14 +337,14 @@ const emit = defineEmits(["closeDialogBookingForm"]);
               <div class="modify-translate-top">
                 <el-form-item prop="endTime">
                   <el-time-select
-                  v-model="form.endTime"
-                  :min-time="startTime"
-                  placeholder="End time"
-                  :start="startTime"
-                  step="00:30"
-                  end="18:00"
-                  required
-                />
+                    v-model="form.endTime"
+                    :min-time="startTime"
+                    placeholder="End time"
+                    :start="startTime"
+                    step="00:30"
+                    end="18:00"
+                    required
+                  />
                 </el-form-item>
               </div>
             </el-col>
@@ -316,7 +353,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
       </el-row>
 
       <el-form-item label="選擇會議室" prop="roomId">
-        <el-select v-model="roomId" placeholder="Select" >
+        <el-select v-model="roomId" placeholder="Select">
           <el-option
             v-for="item in useRoomListStore.rooms"
             :key="item.id"
@@ -334,7 +371,6 @@ const emit = defineEmits(["closeDialogBookingForm"]);
         </div>
       </el-form-item>
     </el-form>
-
   </div>
 </template>
 <style lang="scss">
