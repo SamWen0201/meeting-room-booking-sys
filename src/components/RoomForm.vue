@@ -5,6 +5,9 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { useRoomList } from "@/stores/roomList";
 import type { Room } from "@/types";
 
+// import rulesForm instance
+import type { FormInstance } from "element-plus";
+
 const roomListStore = useRoomList();
 
 // bookingForm state
@@ -18,25 +21,59 @@ const roomAddForm = reactive({
   equipments
 })
 
-function addRoom():void {
+const roomFormRef = ref<FormInstance>();
 
-  if(roomFormIsValid()) {
-    roomListStore.addRoom({
-    id: crypto.randomUUID(),
-    name: name.value,
-    capacity: capacity.value,
-    equipments: equipments.value,
-  });
-
-    // remove the input
-    name.value = "";
-    capacity.value = 0;
-    equipments.value = [];
-
-    emit('closeDialoagRoomForm');
-  }else {
-    return;
+const formRules = reactive({
+  name: [
+    {required: true, message: '必須輸入會議室名稱', trigger: 'blur'}
+  ],
+  capacity: [
+    {reqired: true, validator: capacityValidation, trigger: 'blur'}
+  ],
+})
+// 嘗試去寫 el-table 的自我較驗
+function capacityValidation(rule: any, value: any, callback: Function): void {
+  if (!value) {
+    callback(new Error('必須輸入容納人數'))
+  } else if (!Number.isInteger(Number(value)) || Number(value) < 1) {
+    callback(new Error('容納人數必須為正整數'))
+  } else {
+    callback() // 驗證通過
   }
+}
+
+async function addRoom(): Promise<void> {
+
+
+  // 增基 el-form 驗證邏輯
+  if (!roomFormRef.value) return;
+
+  await roomFormRef.value.validate( (valid) => {
+    if (!valid) {
+      console.log('表單驗證失敗')
+      return
+    }
+
+    if(roomFormIsValid()) {
+      roomListStore.addRoom({
+      id: crypto.randomUUID(),
+      name: name.value,
+      capacity: capacity.value,
+      equipments: equipments.value,
+    });
+
+      // remove the input
+      name.value = "";
+      capacity.value = 0;
+      equipments.value = [];
+
+      emit('closeDialoagRoomForm');
+    }else {
+      return;
+    }
+
+  })
+
 
   
 }
@@ -53,7 +90,6 @@ const emit = defineEmits(['closeDialoagRoomForm']);
 
 // define props
 const props = defineProps<{editData?: Room}>();
-console.log(props.editData);
 
 // 透過 editData 的值 來決定目前是 新增模式 或 編輯模式
 const isEditing = computed<boolean>(() => {
@@ -133,12 +169,12 @@ function editRoom(): void {
   </el-form>
 
   <!-- ADD FORM -->
-  <el-form :model="roomAddForm" label-position="top" v-else>
-    <el-form-item label="會議室名稱">
+  <el-form :model="roomAddForm" label-position="top" :rules="formRules" ref="roomFormRef" v-else >
+    <el-form-item label="會議室名稱" prop="name">
       <el-input v-model="roomAddForm.name" />
     </el-form-item>
 
-    <el-form-item label="容納人數">
+    <el-form-item label="容納人數" prop="capacity">
       <el-input type="number" v-model="roomAddForm.capacity" />
     </el-form-item>
 

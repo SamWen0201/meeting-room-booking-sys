@@ -9,6 +9,10 @@ import type { FormInstance } from "element-plus";
 // import store
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
+
+// import notification
+import { ElNotification } from 'element-plus'
+
 const useRoomListStore = useRoomList();
 const useBookingListStore = useBookingList();
 
@@ -38,9 +42,6 @@ watch(() => props.todayDateInMidNight, (val) => {
   if (val) date.value = val; },
   { immediate: true }
 )
-// if (props.todayDateInMidNight) {
-//   date.value = props.todayDateInMidNight;
-// }
 watch(
   () => props.prefilledRoomId,
   (val) => {
@@ -56,6 +57,12 @@ watch(
   { immediate: true },
 );
 
+// 監聽時段的狀態，只要修改時間，會議室的選擇就會 reset
+// 因為目前會議室衝突的邏輯是透過 取消 diable 選項達成的，背後的邏輯沒有在提交的時候做攔截
+watch ([startTime, endTime], () => {
+  roomId.value = '';
+})
+
 // handle formRules
 const bookingFormRef = ref<FormInstance>();
 
@@ -69,11 +76,19 @@ const formRules = reactive({
       trigger: "blur",
     },
   ],
-  date: [
+  // date: [
+  //   {
+  //     type: "date",
+  //     required: true,
+  //     message: "必須輸入日期",
+  //     trigger: "change",
+  //   },
+  // ],
+   date: [
     {
-      type: "date",
       required: true,
-      message: "必須輸入日期",
+      type: 'date',
+      message: '必須輸入日期',
       trigger: "change",
     },
   ],
@@ -95,6 +110,11 @@ const formRules = reactive({
   ],
   roomId: [{ required: true, message: "必須選擇會議室", trigger: "change" }],
 });
+// function dateValidation(rule: any, value: any, callback: Function): void {
+//   if (!value) {
+//     callback(new Error('必須輸入日期'));
+//   }
+// }
 
 function combineDateTime(): Date[] {
   // 思考 combineDateTime 的執行時間，
@@ -143,16 +163,19 @@ async function addBooking(): Promise<void> {
       return;
     }
 
-    if (
-      !titleIsValid() ||
-      !durationIsValid() ||
-      !dateIsValid() ||
-      !roomId.value
-    ) {
+    if (!titleIsValid()) {
       // addBooking
-      console.log("Booking failed! Booking is invalid!");
+      console.log("會議主題必須填寫!");
       return;
+    } else if (!durationIsValid()) {
+      console.log('會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!');
+    }
+    else if (!dateIsValid()) {
+      console.log('不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間');
+    }else if (!roomId.value) {
+      console.log('必須要選擇會議室!');
     } else {
+      console.log('表單驗證通過，可以新增!');
       const [bookingStartTime, bookingEndTime] = combineDateTime() as [
         Date,
         Date,
@@ -175,6 +198,10 @@ async function addBooking(): Promise<void> {
       endTime.value = "";
 
       // closse the dialoa
+      ElNotification({
+        title: 'Success',
+        message: '順利新增'
+      })
       emit("closeDialogBookingForm");
     }
   });
@@ -194,11 +221,11 @@ function titleIsValid(): boolean {
 // 會議開始時間不能大於結束時間
 // 會議時間以 30 分鐘為一單位
 function durationIsValid(): boolean {
-  const [startHour, startMinute] = startTime.value.split(":").map(Number) as [
+  const [startHour, startMinute] = startTime?.value.split(":").map(Number) as [
     number,
     number,
   ];
-  const [endHour, endMinute] = endTime.value.split(":").map(Number) as [
+  const [endHour, endMinute] = endTime.value?.split(":").map(Number) as [
     number,
     number,
   ];
@@ -211,7 +238,7 @@ function durationIsValid(): boolean {
   }
 
   // 時間以 30 分鐘為一單位
-  const duration = startHour * 60 + startMinute - (endHour * 60 + endMinute);
+  const duration =  (endHour * 60 + endMinute) - startHour * 60 + startMinute;
 
   if (duration % 30 !== 0) {
     return false;
@@ -243,17 +270,21 @@ function dateIsValid(): boolean {
     number,
   ];
   // 預約時間只能介於 9:00-18:00 之間
-  if (startHour < 9 && endHour > 18) {
+  if (startHour < 9 || endHour > 18) {
     return false;
   }
   return true;
 }
 
 function roomIsUsing(roomId: string): boolean {
-  if (!dateIsValid() || !durationIsValid()) {
-    console.log("data is invalid");
-    return false;
-  }
+  // if (!dateIsValid()) {
+  //   console.log("日期沒有被正確填寫!，無法判斷該會議室是否有人使用。");
+  //   // return false;
+  // }
+  // if (!durationIsValid()) {
+  //   console.log("時段沒有被正確填寫!，無法判斷該會議室是否有人使用。");
+  //   // return false;
+  // }
   // 該時段正在被使用的會議室不能預約
   // 演算法核心：Existing.Start < New.End AND Existing.End > New.Start。
   // 若上述條件成立，代表時段重疊，該會議室不可選或送出表單時需報錯。
@@ -270,6 +301,8 @@ function roomIsUsing(roomId: string): boolean {
 
   // 在使用該會議室的 多個預約記錄，找到跟 BookingForm 選擇的會議時間段 衝突的紀錄
   const [bookingStartTime, bookingEndTime] = combineDateTime();
+  console.log('預約會議起始時間', bookingStartTime);
+  console.log('預約會議結束時間', bookingEndTime);
 
   if (bookingStartTime === undefined || bookingEndTime === undefined) {
     // 這邊只是先暫時處理，之後需要處理 bookingStartTime, bookingEndTime 可能會是 undefined 的問題

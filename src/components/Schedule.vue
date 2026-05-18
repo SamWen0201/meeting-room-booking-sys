@@ -218,6 +218,7 @@ function handleCloseDialoagBookingForm(): void {
 }
 
 function handleTimelineClick(event: MouseEvent, roomId: string): void {
+  console.log('clicked in handleTimelineClick');
   const target = event.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
   // console.log(rect);
@@ -231,6 +232,7 @@ function handleTimelineClick(event: MouseEvent, roomId: string): void {
   const hour = Math.floor(totalMinutes / 60);
   const minute = totalMinutes % 60;
   const clickedTime = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+  console.log(clickedTime);
 
   // 帶入 BookingForm 的預設時間
   prefilledRoomId.value = roomId;
@@ -239,6 +241,13 @@ function handleTimelineClick(event: MouseEvent, roomId: string): void {
 }
 const prefilledRoomId = ref<string>("");
 const prefilledStartTime = ref<string>("");
+
+// 因為目前的新增預約會議紀錄的方法是綁定在 timeline list 上面的，所以我們直接將事件避免往上傳遞
+// 阻止打開 Modal 的行為
+function handleTimeBlockClicked(event: MouseEvent): void {
+  console.log('clicked in handleTimeBlockClicked')
+   event.stopPropagation();
+}
 
 // -- 另一個渲染時間軸的方法(使用 table?)
 // 目前的想法是將 table 和時間段分開處理，先渲染出表格
@@ -377,6 +386,7 @@ const prefilledStartTime = ref<string>("");
                     getBlockStyle(booking),
                   ]"
                   class="timeline-chart__time-block"
+                  @click="handleTimeBlockClicked($event)"
                 >
                   <span class="timeline-chart__time-block-text">
                     {{ booking.title }} {{ getUserName(booking.userId) }}
