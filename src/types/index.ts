@@ -18,7 +18,8 @@ export interface Booking {
 
 export interface User {
     id: string,
-    role: "admin" | "normal",
+    password: string,
+    role: "admin" | "employee",
     name: string
     // 有可能還有其他資料... 
 }

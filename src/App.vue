@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 // import { RouterLink, RouterView } from 'vue-router'
 import { onMounted, ref } from "vue";
 import { useRoomList } from "./stores/roomList";
@@ -7,6 +7,7 @@ import { useUser } from "./stores/userStore";
 
 // import route
 import { useRoute } from "vue-router";
+
 const route = useRoute();
 
 // test element plus components
@@ -14,20 +15,23 @@ const route = useRoute();
 // element plus
 
 const dataIsReady = ref<boolean>(false);
+const roomListStore = useRoomList();
+const bookingListStore = useBookingList();
+const userStore = useUser();
 
 onMounted(async () => {
   // get initial rooms data
-  const roomListStore = useRoomList();
+  
   await roomListStore.fetchRooms();
   console.log("fetch rooms finished!");
 
   // get initial bookings data
-  const bookingListStore = useBookingList();
+  
   await bookingListStore.fetchBookings();
   console.log("fetch bookings finished!");
 
   // get initial users data
-  const userStore = useUser();
+  
   await userStore.fetchUsers();
   console.log('fetch users finished!');
 
@@ -37,16 +41,16 @@ onMounted(async () => {
 
 <template>
   <el-container class="whole-container">
-    <el-aside class="aside">
+    <el-aside class="aside" v-if="userStore.isLoggedIn">
       <nav class="nav">
         <RouterLink to="/" class="nav__link">日程總覽</RouterLink>
-        <RouterLink to="/room-management" class="nav__link"
+        <RouterLink to="/room-management" class="nav__link" v-if="userStore.isAdmin"
           >會議室維護</RouterLink
         >
       </nav>
     </el-aside>
     <el-container>
-      <el-header class="header">
+      <el-header class="header" v-if="userStore.isLoggedIn">
         <h1 class="heading-primary">
           {{ route.meta.title }}
         </h1>
@@ -107,4 +111,27 @@ onMounted(async () => {
 }
 
 
-</style>
+</style> -->
+
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
+import { useRoomList } from "./stores/roomList";
+import { useBookingList } from "./stores/bookingListStore";
+import { useUser } from "./stores/userStore";
+
+const dataIsReady = ref<boolean>(false);
+const roomListStore = useRoomList();
+const bookingListStore = useBookingList();
+const userStore = useUser();
+
+onMounted(async () => {
+  await roomListStore.fetchRooms();
+  await bookingListStore.fetchBookings();
+  await userStore.fetchUsers();
+  dataIsReady.value = true;
+});
+</script>
+
+<template>
+  <RouterView v-if="dataIsReady"></RouterView>
+</template>

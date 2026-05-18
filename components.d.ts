@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppLayout: typeof import('./src/components/AppLayout.vue')['default']
     BookingForm: typeof import('./src/components/BookingForm.vue')['default']
     BookingList: typeof import('./src/components/BookingList.vue')['default']
     Datepicker: typeof import('./src/components/Elcomponents/Datepicker.vue')['default']

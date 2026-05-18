@@ -71,11 +71,13 @@ const users: User[] = [
     id: "1",
     role: "admin",
     name: "Sam Wen",
+    password: '1234'
   },
   {
     id: "2",
-    role: "normal",
+    role: "employee",
     name: "John Wick",
+    password: '5678'
   },
 ];
 

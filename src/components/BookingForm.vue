@@ -9,12 +9,14 @@ import type { FormInstance } from "element-plus";
 // import store
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
+import { useUser } from "@/stores/userStore";
 
 // import notification
 import { ElNotification } from 'element-plus'
 
 const useRoomListStore = useRoomList();
 const useBookingListStore = useBookingList();
+const useUserStore = useUser();
 
 const title = ref<string>("");
 const date = ref<Date>(new Date("")); // 預設想要預約的會議日期是今天
@@ -185,7 +187,7 @@ async function addBooking(): Promise<void> {
       const newBooking: Booking = {
         id: crypto.randomUUID(),
         roomId: roomId.value,
-        userId: "1",
+        userId: useUserStore.currentUser?.id as string,
         title: title.value,
         startTime: bookingStartTime?.getTime(),
         endTime: bookingEndTime?.getTime(),
