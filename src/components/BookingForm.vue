@@ -76,14 +76,6 @@ const formRules = reactive({
       trigger: "blur",
     },
   ],
-  // date: [
-  //   {
-  //     type: "date",
-  //     required: true,
-  //     message: "必須輸入日期",
-  //     trigger: "change",
-  //   },
-  // ],
    date: [
     {
       required: true,
@@ -172,6 +164,15 @@ async function addBooking(): Promise<void> {
     }
     else if (!dateIsValid()) {
       console.log('不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間');
+
+      // Warnning notification
+      ElNotification({
+          title: 'Warning',
+          message: '不能選擇過去的時間!',
+          duration: 3000,
+          type: 'warning'
+      })
+
     }else if (!roomId.value) {
       console.log('必須要選擇會議室!');
     } else {
@@ -197,11 +198,14 @@ async function addBooking(): Promise<void> {
       startTime.value = "";
       endTime.value = "";
 
-      // closse the dialoa
+      // Sucess notification
       ElNotification({
         title: 'Success',
-        message: '順利新增'
+        message: '新增成功',
+        duration: 3000,
+        type: 'success'
       })
+      // closse the dialoa
       emit("closeDialogBookingForm");
     }
   });
@@ -354,7 +358,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
 
         <el-col :md="24" :lg="12">
           <el-form-item label="時段" label-position="top">
-            <el-col :span="11">
+            <el-col :md="11">
               <div class="modify-translate-top">
                 <el-form-item prop="startTime">
                   <el-time-select
@@ -369,8 +373,10 @@ const emit = defineEmits(["closeDialogBookingForm"]);
                 </el-form-item>
               </div>
             </el-col>
-            <el-col class="text-ceter" :span="1">-</el-col>
-            <el-col :span="11">
+            <el-col class="u-flex-center hyphen-between-time-select" :md="1">
+              <span>&#45;</span>
+            </el-col>
+            <el-col :md="11">
               <div class="modify-translate-top">
                 <el-form-item prop="endTime">
                   <el-time-select
@@ -401,7 +407,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
         </el-select>
       </el-form-item>
 
-      <el-form-item label-position="right" label-width="">
+      <el-form-item label-position="right">
         <div class="u-margin-left-auto">
           <el-button @click="$emit('closeDialogBookingForm')">取消</el-button>
           <el-button type="primary" @click="addBooking">確認預約</el-button>
@@ -416,7 +422,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
   transform: translateY(-2.5px);
 }
 .text-ceter {
-  transform: translateX(0.5rem);
+  // transform: translateX(0.5rem);
 }
 .bookingform {
   @media only screen and (max-width: 62em) { // 992px

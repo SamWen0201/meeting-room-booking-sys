@@ -8,6 +8,9 @@ import type { Room } from "@/types";
 // import rulesForm instance
 import type { FormInstance } from "element-plus";
 
+// import notification
+import { ElNotification } from 'element-plus'
+
 const roomListStore = useRoomList();
 
 // bookingForm state
@@ -45,7 +48,7 @@ function capacityValidation(rule: any, value: any, callback: Function): void {
 async function addRoom(): Promise<void> {
 
 
-  // 增基 el-form 驗證邏輯
+  // 增加 el-form 驗證邏輯
   if (!roomFormRef.value) return;
 
   await roomFormRef.value.validate( (valid) => {
@@ -66,6 +69,14 @@ async function addRoom(): Promise<void> {
       name.value = "";
       capacity.value = 0;
       equipments.value = [];
+
+      // Sucess notification
+      ElNotification({
+        title: 'Success',
+        message: '新增成功',
+        duration: 3000,
+        type: 'success'
+      })
 
       emit('closeDialoagRoomForm');
     }else {
@@ -126,6 +137,14 @@ function editRoom(): void {
       name.value = "";
       capacity.value = 0;
       equipments.value = [];
+
+      // Sucess notification
+      ElNotification({
+        title: 'Success',
+        message: '編輯成功',
+        duration: 3000,
+        type: 'success'
+      })
 
       emit('closeDialoagRoomForm');
     }else {

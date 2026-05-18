@@ -513,7 +513,7 @@ function handleTimeBlockClicked(event: MouseEvent): void {
     // &:not(:last-child) {
     //   border-right: 1px solid $color-text-main;
     // }
-    // padding-left: $spacing-md;
+    padding-left: $spacing-sm;
   }
 
   // room 的項目列 / 時間軸

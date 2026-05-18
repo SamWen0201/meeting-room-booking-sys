@@ -9,6 +9,9 @@ import RoomForm from './RoomForm.vue';
 import { useRoomList } from '@/stores/roomList';
 import { useBookingList } from "../stores/bookingListStore";
 
+// import notification
+import { ElNotification } from 'element-plus'
+
 
 const roomListStore = useRoomList();
 const bookingListStore = useBookingList();
@@ -36,6 +39,15 @@ const roomEditData = reactive<Room>({
 function editRoomItem(id: string): void {
     if (roomIsUsing(id)) {
         console.log("Room is using or will use in the future. You can't edit the room. ");
+
+        // Warnning notification
+        ElNotification({
+            title: 'Warning',
+            message: '該會議室有未來預約，無法編輯!',
+            duration: 3000,
+            type: 'warning'
+        })
+
         return;
     }else {
         // edit the room
@@ -65,11 +77,28 @@ function deleteRoomItem(id: string): void{
 
    if(roomIsUsing(id)) {
     console.log("Room is using or will use in the future. You can't delete the room. ");
+
+    // Warnning notification
+    ElNotification({
+        title: 'Warning',
+        message: '該會議室有未來預約，無法刪除!',
+        duration: 3000,
+        type: 'warning'
+    })
+
     return;
    }else {
     // delete the room
     roomListStore.deleteRoom(id);
     console.log('Room has been deleted!');
+
+    // Warnning notification
+    ElNotification({
+        title: 'Success',
+        message: '刪除成功',
+        duration: 3000,
+        type: 'success'
+    })
    }
 }
 
