@@ -33,13 +33,17 @@ const props = defineProps<{
   prefilledRoomId: string;
   prefilledStartTime: string;
 }>();
-if (props.todayDateInMidNight) {
-  date.value = props.todayDateInMidNight;
-}
+// 監聽 props ，如果有值，就將數值填入 BookingForm
+watch(() => props.todayDateInMidNight, (val) => {
+  if (val) date.value = val; },
+  { immediate: true }
+)
+// if (props.todayDateInMidNight) {
+//   date.value = props.todayDateInMidNight;
+// }
 watch(
   () => props.prefilledRoomId,
   (val) => {
-    console.log(`${val} is existed`);
     if (val) roomId.value = val;
   },
   { immediate: true },
@@ -47,7 +51,6 @@ watch(
 watch(
   () => props.prefilledStartTime,
   (val) => {
-    console.log(`${val} is existed`);
     if (val) startTime.value = val;
   },
   { immediate: true },
@@ -299,13 +302,14 @@ const emit = defineEmits(["closeDialogBookingForm"]);
       :rules="formRules"
       label-position="top"
       ref="bookingFormRef"
+      class="bookingform"
     >
       <el-form-item label="會議主題" label-position="top" prop="title">
         <el-input v-model="form.title" :maxlength="50" show-word-limit />
       </el-form-item>
 
       <el-row>
-        <el-col :span="12">
+        <el-col :md="24" :lg="12">
           <el-form-item label="日期" label-position="top" prop="date">
             <el-date-picker
               v-model="form.date"
@@ -315,7 +319,7 @@ const emit = defineEmits(["closeDialogBookingForm"]);
           </el-form-item>
         </el-col>
 
-        <el-col :span="12">
+        <el-col :md="24" :lg="12">
           <el-form-item label="時段" label-position="top">
             <el-col :span="11">
               <div class="modify-translate-top">
@@ -380,5 +384,10 @@ const emit = defineEmits(["closeDialogBookingForm"]);
 }
 .text-ceter {
   transform: translateX(0.5rem);
+}
+.bookingform {
+  @media only screen and (max-width: 62em) { // 992px
+    width: 100%;
+  }
 }
 </style>

@@ -176,14 +176,23 @@ const timeBlockColors = [
   "var(--color-timeline-sucess)",
   "var(--color-timeline-danger)",
 ];
-function generateBackgroundColor(colors: string[]): {
-  "background-color": string;
-} {
-  return {
-    "background-color": colors[
-      Math.floor(Math.random() * colors.length)
-    ] as string,
-  };
+
+// function generateBackgroundColor(colors: string[]): {
+//   "background-color": string;
+// } {
+//   return {
+//     "background-color": colors[
+//       Math.floor(Math.random() * colors.length)
+//     ] as string,
+//   };
+// }
+
+// 原本是透過隨機的方式給予顏色，現在透過 charCodeAt 計算出 bookingId 的第一個 ASCII 碼(重點是 ASCII 碼一定會是整數)，之後除以色碼的長度獲得的餘數當作 index
+// 現在顏色會是固定的渲染方式
+function getBookingColor(bookingId: string): { "background-color": string }  {
+  const index = bookingId.charCodeAt(0) % timeBlockColors.length;
+  
+  return { "background-color": timeBlockColors[index] as string};
 }
 
 // getTimeBlockInfo(booking: Booking) 獲得當前 time block 的詳細資訊:包含 會議主題、開始時間到結束時間、會議時長、預約人
@@ -211,6 +220,7 @@ function handleCloseDialoagBookingForm(): void {
 function handleTimelineClick(event: MouseEvent, roomId: string): void {
   const target = event.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
+  // console.log(rect);
 
   // 點擊位置換算成分鐘，以 30 分鐘為單位對齊
   const clickPercent = (event.clientX - rect.left) / rect.width;
@@ -297,6 +307,7 @@ const prefilledStartTime = ref<string>("");
 
 // // 會回傳預約有預約紀錄的 style
 // function getTimeBlockStyle(): {} | void {}
+
 </script>
 
 <template>
@@ -362,7 +373,7 @@ const prefilledStartTime = ref<string>("");
               >
                 <div
                   :style="[
-                    generateBackgroundColor(timeBlockColors),
+                    getBookingColor(booking.id),
                     getBlockStyle(booking),
                   ]"
                   class="timeline-chart__time-block"
@@ -406,6 +417,7 @@ const prefilledStartTime = ref<string>("");
       v-model="dialogBookingFormVisible"
       title="預約會議室"
       destroy-on-close
+      class="booking-dialog"
     >
       <BookingForm
         @closeDialogBookingForm="handleCloseDialoagBookingForm"
@@ -442,6 +454,10 @@ const prefilledStartTime = ref<string>("");
     padding-left: 0;
   }
 
+  @media only screen and (max-width: 56.25em) {
+       overflow: scroll;
+  }
+
   // timeline 標題列
   // time-block-wrapper 的 grid-column 數值設定 會跟 room-wrapper 的 grid-column 數值設定相同，為了讓兩者的對齊
   // 剛好兩者的
@@ -449,12 +465,19 @@ const prefilledStartTime = ref<string>("");
   &__room-wrapper {
     display: grid;
     grid-template-columns: minmax(10rem, min-content) 1fr; // 這邊的 8 rem 等等需要先跟下方的會議室設定相同
+    // // font-family: "Noto Sans TC", sans-serif;
+    // font-weight: $font-weight-body;
 
     & span {
       grid-column: 1 / 2;
       padding: $spacing-xs;
       // border-right: 1px solid $color-text-main;
     }
+
+    @media only screen and (max-width: 56.25em) {
+        min-width: 75em;
+    }
+    
   }
   // 幫 room 加上 border-top 和 border-bottom
   &__room-wrapper {
@@ -497,6 +520,7 @@ const prefilledStartTime = ref<string>("");
     flex: 1 1 auto;
     position: relative;
 
+    // 畫出兩邊的 border 
     background-image: repeating-linear-gradient(
       to right,
       $color-border,
@@ -511,7 +535,7 @@ const prefilledStartTime = ref<string>("");
   &__time-block {
     position: absolute;
     height: 100%; // 先設定為這樣，如果之後有問題再調整
-    transform: scaleY(0.9);
+    // transform: scaleY(0.9);
     // 先設定字體大小為比較小
     font-weight: $font-weight-title;
     color: $color-text-main;
@@ -536,6 +560,14 @@ const prefilledStartTime = ref<string>("");
   cursor: pointer;
 
   &__time-block {
+  }
+}
+
+// dialog media query
+.booking-dialog {
+  @media only screen and (max-width: 62em) {
+    // 992px
+    // width: 100%;
   }
 }
 </style>
