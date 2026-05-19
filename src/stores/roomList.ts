@@ -19,9 +19,8 @@ export const useRoomList = defineStore("roomList", () => {
 
 
   function addRoom(room: Room): void {
-    rooms.value.push(room);
-    console.log("Room add success!");
-    console.log(rooms.value);
+    rooms.value.push(room); // 現在將新增這個操作交給 Mock 處理， store 只負責呼叫 API 和 儲存資料。
+    // await axios.post('/api/v1/rooms', room);
   }
 
   function deleteRoom(id: string): void{

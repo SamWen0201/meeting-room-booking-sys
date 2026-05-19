@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch, computed, onMounted } from "vue";
 
 import type { Booking } from "@/types";
 
@@ -38,6 +38,7 @@ const props = defineProps<{
   todayDateInMidNight: Date | null;
   prefilledRoomId: string;
   prefilledStartTime: string;
+  bookingEditData: Booking;
 }>();
 // 監聽 props ，如果有值，就將數值填入 BookingForm
 // 使用 getter 方式才能正確監聽數值
@@ -159,36 +160,7 @@ async function addBooking(): Promise<void> {
       return;
     }
 
-    if (!titleIsValid()) {
-      // addBooking
-      console.log("會議主題必須填寫!");
-      return;
-    }else if (!durationIsValid()) {
-      console.log('會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!');
-    }else if (!dateIsValid()) {
-      console.log('不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間');
-
-      // Warnning notification
-      ElNotification({
-          title: 'Warning',
-          message: '不能選擇過去的時間',
-          duration: 3000,
-          type: 'warning',
-          position: 'bottom-right'
-      })
-
-    }else if (!roomId.value) {
-      console.log('必須要選擇會議室!');
-    }else if(roomIsUsing(roomId.value)) {
-      // 選擇的會議室不能正被使用(也就是有其他的預約)
-      ElNotification({
-          title: 'Warning',
-          message: '該時段此會議室已經被預約，請選擇其他會議室',
-          duration: 3000,
-          type: 'warning',
-         position: 'bottom-right'
-      })
-    }else {
+    if(bookingFormIsValid()){
       console.log('表單驗證通過，可以新增!');
       const [bookingStartTime, bookingEndTime] = combineDateTime() as [
         Date,
@@ -223,6 +195,44 @@ async function addBooking(): Promise<void> {
       emit("closeDialogBookingForm");
     }
   });
+}
+
+function bookingFormIsValid(): boolean {
+   if (!titleIsValid()) {
+      // addBooking
+      console.log("會議主題必須填寫!");
+      return false;
+    }else if (!durationIsValid()) {
+      console.log('會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!');
+      return false;
+    }else if (!dateIsValid()) {
+      console.log('不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間');
+
+      // Warnning notification
+      ElNotification({
+          title: 'Warning',
+          message: '不能選擇過去的時間',
+          duration: 3000,
+          type: 'warning',
+          position: 'bottom-right'
+      })
+      return false;
+    }else if (!roomId.value) {
+      console.log('必須要選擇會議室!');
+      return false;
+    }else if(roomIsUsing(roomId.value)) {
+      // 選擇的會議室不能正被使用(也就是有其他的預約)
+      ElNotification({
+          title: 'Warning',
+          message: '該時段此會議室已經被預約，請選擇其他會議室',
+          duration: 3000,
+          type: 'warning',
+         position: 'bottom-right'
+      })
+      return false;
+    }else {
+      return true;
+    }
 }
 
 // 輸入限制：
@@ -319,8 +329,8 @@ function roomIsUsing(roomId: string): boolean {
 
   // 在使用該會議室的 多個預約記錄，找到跟 BookingForm 選擇的會議時間段 衝突的紀錄
   const [bookingStartTime, bookingEndTime] = combineDateTime();
-  console.log('預約會議起始時間', bookingStartTime);
-  console.log('預約會議結束時間', bookingEndTime);
+  // console.log('預約會議起始時間', bookingStartTime);
+  // console.log('預約會議結束時間', bookingEndTime);
 
   if (bookingStartTime === undefined || bookingEndTime === undefined) {
     // 這邊只是先暫時處理，之後需要處理 bookingStartTime, bookingEndTime 可能會是 undefined 的問題
@@ -342,23 +352,96 @@ function roomIsUsing(roomId: string): boolean {
     return false;
   }
 }
-
 // emit closeDialogBookingForm events
 const emit = defineEmits(["closeDialogBookingForm"]);
+
+// 偵測目前是否是編輯 booking 
+const isEditing = computed(() => {
+  return props.bookingEditData?.id ? true : false;
+})
+
+// 將獲得的值填入 bookingForm
+function fillInEditBookingData(): void {
+  if (isEditing.value) {
+    form.title = props.bookingEditData.title;
+    form.roomId =props.bookingEditData.roomId;
+    // console.log(transformTimeStampToHourMinuteTimeString(props.bookingEditData.startTime));
+    // console.log(transformTimeStampToHourMinuteTimeString(props.bookingEditData.endTime));
+    form.startTime = transformTimeStampToHourMinuteTimeString(props.bookingEditData.startTime);
+    form.endTime = transformTimeStampToHourMinuteTimeString(props.bookingEditData.endTime);
+  
+  }
+}
+
+// 將 timestamp 轉換成像 '09:00', '10:00' 這樣的字串
+function transformTimeStampToHourMinuteTimeString(timestamp: number): string {
+  const theDate = new Date(timestamp);
+  const hours = theDate.getHours();
+  const minutes = theDate.getMinutes();
+
+  return `${hours}:${minutes ? minutes : '00'}`;
+}
+
+onMounted(() => {
+  fillInEditBookingData();
+})
+
+// 修改預約
+function editBooking(): void {
+  if (isEditing.value) {
+    // 如果修改的資料確實存在
+    // 去找到要進行編輯的 booking 
+    console.log(props.bookingEditData);
+    
+    // 因為 bookingFormIsValid 會去檢查所有的 bookingForm 檢查，
+    // 包含目前的會議室是否有人使用，所以這邊的 編輯其實是被自己擋住了?
+    if (bookingFormIsValid()) {
+      const [bookingStartTime, bookingEndTime] = combineDateTime() as [
+        Date,
+        Date,
+      ];
+
+      useBookingListStore.bookings.map( (booking) => {
+        if (booking.id === props.bookingEditData?.id) {
+          booking.title = form.title;
+          booking.roomId = form.roomId;
+          booking.startTime = bookingStartTime.getTime();
+          booking.endTime = bookingEndTime.getTime();
+        }
+        return booking;
+      })
+
+      console.log('編輯成功!');
+    } 
+  }
+
+  emit('closeDialogBookingForm'); // 確認編輯完畢之後就關閉目前的
+}
+
+// 刪除預約
+function deleteBooking(): void {
+  if (isEditing.value) {
+    // 如果修改的資料確實存在
+  }
+
+  // 這裡在刪除預約之前，應該會再一次跳出 Modal 讓使用者確認?
+  emit('closeDialogBookingForm'); 
+}
 </script>
 <template>
   <div>
+    <!-- EDIT FORM -->
     <el-form
       :model="form"
       :rules="formRules"
       label-position="top"
       ref="bookingFormRef"
       class="bookingform"
+      v-if="isEditing"
     >
       <el-form-item label="會議主題" label-position="top" prop="title">
         <el-input v-model="form.title" :maxlength="50" show-word-limit />
       </el-form-item>
-
       <el-row>
         <el-col :md="24" :lg="12">
           <el-form-item label="日期" label-position="top" prop="date">
@@ -371,10 +454,93 @@ const emit = defineEmits(["closeDialogBookingForm"]);
         </el-col>
 
         <el-col :md="24" :lg="12">
-          <el-form-item label="時段" label-position="top">
+          <el-form-item label="時段" label-position="top" required>
             <el-col :md="11">
               <div class="modify-translate-top">
-                <el-form-item prop="startTime">
+                <el-form-item prop="startTime" >
+                  <el-time-select
+                    v-model="form.startTime"
+                    :max-time="endTime"
+                    placeholder="Start time"
+                    start="09:00"
+                    step="00:30"
+                    end="17:30"
+                    required
+                  />
+                </el-form-item>
+              </div>
+            </el-col>
+            <el-col class="u-flex-center hyphen-between-time-select" :md="1">
+              <span>&#45;</span>
+            </el-col>
+            <el-col :md="11">
+              <div class="modify-translate-top">
+                <el-form-item prop="endTime">
+                  <el-time-select
+                    v-model="form.endTime"
+                    :min-time="startTime"
+                    placeholder="End time"
+                    :start="startTime"
+                    step="00:30"
+                    end="18:00"
+                    required
+                  />
+                </el-form-item>
+              </div>
+            </el-col>
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-form-item label="選擇會議室" prop="roomId">
+        <el-select v-model="roomId" placeholder="Select">
+          <el-option
+            v-for="item in useRoomListStore.rooms"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+            :disabled="roomIsUsing(item.id)"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label-position="right">
+        <div class="u-margin-left-auto">
+          <el-button @click="$emit('closeDialogBookingForm')">取消</el-button>
+          <el-button type="danger" @click="deleteBooking">取消預約</el-button>
+          <el-button type="primary" @click="editBooking">確認修改</el-button>
+        </div>
+      </el-form-item>
+    </el-form>
+
+    <!-- ADD FORM -->
+    <el-form
+      :model="form"
+      :rules="formRules"
+      label-position="top"
+      ref="bookingFormRef"
+      class="bookingform"
+      v-else
+    >
+      <el-form-item label="會議主題" label-position="top" prop="title">
+        <el-input v-model="form.title" :maxlength="50" show-word-limit />
+      </el-form-item>
+      <el-row>
+        <el-col :md="24" :lg="12">
+          <el-form-item label="日期" label-position="top" prop="date">
+            <el-date-picker
+              v-model="form.date"
+              type="date"
+              placeholder="Pick a day"
+            />
+          </el-form-item>
+        </el-col>
+
+        <el-col :md="24" :lg="12">
+          <el-form-item label="時段" label-position="top" required>
+            <el-col :md="11">
+              <div class="modify-translate-top">
+                <el-form-item prop="startTime" >
                   <el-time-select
                     v-model="form.startTime"
                     :max-time="endTime"

@@ -37,29 +37,16 @@ const roomEditData = reactive<Room>({
     equipments:[]});
 
 function editRoomItem(id: string): void {
-    if (roomIsUsing(id)) {
-        console.log("Room is using or will use in the future. You can't edit the room. ");
+   
+    // edit the room
+    const editRoom = roomListStore.rooms.find( (el) => el.id === id);
+    Object.assign(roomEditData, editRoom);
 
-        // Warnning notification
-        ElNotification({
-            title: 'Warning',
-            message: '該會議室有未來預約，無法編輯!',
-            duration: 3000,
-            type: 'warning',
-            position: 'bottom-right'
-        })
+    dialogRoomFormVisible.value = true; // open the dialog
 
-        return;
-    }else {
-        // edit the room
-        const editRoom = roomListStore.rooms.find( (el) => el.id === id);
-        Object.assign(roomEditData, editRoom);
-
-        dialogRoomFormVisible.value = true; // open the dialog
-
-        // 因為 RoomForm 是子元素，所以這邊打開表格之後沒有辦法將目前表格的狀態填入表格
-        // 其實應該可以? 只是需要將屬性傳遞下去
-    }
+    // 因為 RoomForm 是子元素，所以這邊打開表格之後沒有辦法將目前表格的狀態填入表格
+    // 其實應該可以? 只是需要將屬性傳遞下去
+    
 }
 
 function resetRoomEditData(): void {

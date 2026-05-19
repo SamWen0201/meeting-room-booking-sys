@@ -20,6 +20,7 @@ export interface User {
     id: string,
     password: string,
     role: "admin" | "employee",
-    name: string
+    name: string,
+    apartment: string,
     // 有可能還有其他資料... 
 }

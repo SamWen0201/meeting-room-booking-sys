@@ -31,7 +31,7 @@ const formRules = reactive({
     {required: true, message: '必須輸入會議室名稱', trigger: 'blur'}
   ],
   capacity: [
-    {reqired: true, validator: capacityValidation, trigger: 'blur'}
+    {required: true, validator: capacityValidation, trigger: 'blur'}
   ],
 })
 // 嘗試去寫 el-table 的自我較驗
@@ -124,7 +124,16 @@ onMounted(() => {
 })
 
 // 使用者按下 確認編輯按鈕 則編輯完畢。
-function editRoom(): void { 
+async function editRoom(): Promise<void> { 
+  // 增加 el-form 驗證邏輯
+  if (!roomFormRef.value) return;
+
+  await roomFormRef.value.validate( (valid) => {
+    if (!valid) {
+      console.log('表單驗證失敗')
+      return
+    }
+  
     if (roomFormIsValid()) {
       roomListStore.rooms.map( (el) => {
         if (el.id === props.editData?.id) {
@@ -134,7 +143,7 @@ function editRoom(): void {
         }
         return el;
       })
-       // remove the input
+        // remove the input
       name.value = "";
       capacity.value = 0;
       equipments.value = [];
@@ -153,17 +162,18 @@ function editRoom(): void {
       // 需要再做 notifications
       return;
     }
+  }) 
 }
 
 </script>
 <template>
   <!-- EDIT FORM -->
-  <el-form :model="roomAddForm" label-position="top" v-if="isEditing">
-    <el-form-item label="會議室名稱">
+  <el-form :model="roomAddForm" label-position="top" :rules="formRules" ref="roomFormRef" v-if="isEditing">
+    <el-form-item label="會議室名稱"  prop="name">
       <el-input v-model="roomAddForm.name" />
     </el-form-item>
 
-    <el-form-item label="容納人數">
+    <el-form-item label="容納人數" prop="capacity">
       <el-input type="number" v-model="roomAddForm.capacity" />
     </el-form-item>
 

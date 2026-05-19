@@ -2,7 +2,7 @@
 // import componentes
 import BookingForm from "./BookingForm.vue";
 
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
 
@@ -123,6 +123,10 @@ function getUserName(userId: string): string {
   return useUserStore.users.find((el) => el.id === userId)!.name;
 }
 
+function getUserApartment(userId: string): string {
+  return useUserStore.users.find((el) => el.id === userId)!.apartment;
+}
+
 // --- 目前渲染時間軸的方法(使用 list 和 position) ----
 // 是透過計算 bookingStartTime - todayTime 的 差 -> 這個差我們會將他除以總時間(540分鐘)
 // 所以這個值(百分比) 就會是 時間段的起始點 和 左側標題列 的 起始位置差。
@@ -212,13 +216,19 @@ function getTimeBlockInfo(booking: Booking) {
 
   return `會議主題:${booking.title}, 預約人:${getUserName(booking.userId)},
    開始時間:${startTimeHour}:${startTimeMinute ? startTimeMinute : "00"},
-   會議時長:${durationHour}時${durationMinute}分鐘,`;
+   會議時長:${durationHour}時${durationMinute}分鐘, 部門:${getUserApartment(booking.userId)}`;
 }
 
 // control dialoag
 const dialogBookingFormVisible = ref<boolean>(false);
 function handleCloseDialoagBookingForm(): void {
   dialogBookingFormVisible.value = false;
+}
+
+// 處理當 dialog 結束時的狀態清除
+function resetAfterDialogClose(): void {
+  resetPrefill();
+  resetBookingEditData();
 }
 
 // 將點擊到的空白處，換算成對應的時間，並存到 ref 中給 打開的 Modal 中的 BookingForm 使用
@@ -237,7 +247,7 @@ function handleTimelineClick(event: MouseEvent, roomId: string): void {
   const hour = Math.floor(totalMinutes / 60);
   const minute = totalMinutes % 60;
   const clickedTime = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-  console.log(clickedTime);
+  // console.log(clickedTime);
 
   // 帶入 BookingForm 的預設時間
   prefilledRoomId.value = roomId;
@@ -255,18 +265,56 @@ function resetPrefill(): void {
 
 // 因為目前點擊時間軸新增預約會議紀錄的方法是 綁定在整個時間軸上面的，為了避免點擊已經有預約的時段照樣打開 Modal，
 // 所以我們直接將事件避免往上傳遞阻止打開 Modal 的行為
-function handleTimeBlockClicked(event: MouseEvent): void {
-    console.log('點擊目前有預約的時段!')
-    // Warnning notification
-    ElNotification({
-      title: 'Warning',
-      message: '該時段已被預約',
-      duration: 3000,
-      type: 'warning',
-      position: 'bottom-right'
-    })
+
+// 現在點擊該時段會 打開原本已有的預約進行取消預約，或是修改預約
+// 這部分應該會判斷是該使用者才能夠做預約的修改。
+
+function handleTimeBlockClicked(event: MouseEvent, booking: Booking): void {
+  // 如果是該使用者建立的 booking 則能夠對點擊的預約進行編輯
+    if (booking.userId === useUserStore.currentUser?.id) {
+      editBooking(booking); 
+    }else {
+      console.log('點擊目前有預約的時段!')
+      // Warnning notification
+      ElNotification({
+        title: 'Warning',
+        message: '該時段已被預約',
+        duration: 3000,
+        type: 'warning',
+        position: 'bottom-right'
+      })
+    }
     event.stopPropagation(); // 停止事件向父元素傳遞
+
+    
 }
+
+// bookingEditData 將會儲存預備編輯的 booking 資料，並當作 props 傳給 BookingForm
+const bookingEditData = reactive<Booking>({
+  id: '',
+  roomId: '',
+  userId: '',
+  title: '',
+  startTime: 0,
+  endTime: 0,
+})
+
+function editBooking(booking: Booking): void {
+  console.log(booking);
+
+  Object.assign(bookingEditData, booking);
+  dialogBookingFormVisible.value = true;
+}
+
+function resetBookingEditData() : void {
+  bookingEditData.id = '';
+  bookingEditData.roomId = '';
+  bookingEditData.userId = '';
+  bookingEditData.title = '';
+  bookingEditData.startTime = 0;
+  bookingEditData.endTime = 0;
+}
+
 
 // -- 另一個渲染時間軸的方法(使用 table?)
 // 目前的想法是將 table 和時間段分開處理，先渲染出表格
@@ -405,7 +453,7 @@ function handleTimeBlockClicked(event: MouseEvent): void {
                     getBlockStyle(booking),
                   ]"
                   class="timeline-chart__time-block"
-                  @click="handleTimeBlockClicked($event)"
+                  @click="handleTimeBlockClicked($event, booking)"
                 >
                   <span class="timeline-chart__time-block-text">
                     {{ booking.title }} {{ getUserName(booking.userId) }}
@@ -447,13 +495,14 @@ function handleTimeBlockClicked(event: MouseEvent): void {
       title="預約會議室"
       destroy-on-close
       class="booking-dialog"
-      @close="resetPrefill"
+      @close="resetAfterDialogClose"
       >
         <BookingForm
           @closeDialogBookingForm="handleCloseDialoagBookingForm"
           :todayDateInMidNight="todayDateInMidNight"
           :prefilledRoomId="prefilledRoomId"
           :prefilledStartTime="prefilledStartTime"
+          :bookingEditData="bookingEditData"
         ></BookingForm>
     </el-dialog>
   </div>

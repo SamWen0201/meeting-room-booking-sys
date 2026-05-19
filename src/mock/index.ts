@@ -2,7 +2,7 @@ import type { Booking, Room, User } from "@/types";
 import Mock from "mockjs";
 
 // mock data
-const rooms: Room[] = [
+const initialRooms: Room[] = [
   {
     id: "1",
     name: "會議室A",
@@ -71,13 +71,15 @@ const users: User[] = [
     id: "1",
     role: "admin",
     name: "Sam Wen",
-    password: '1234'
+    password: '1234',
+    apartment: '人資'
   },
   {
     id: "2",
     role: "employee",
     name: "John Wick",
-    password: '5678'
+    password: '5678',
+    apartment: '行政'
   },
 ];
 
@@ -85,7 +87,7 @@ const users: User[] = [
 
 // rooms api
 Mock.mock("/api/v1/rooms", "get", () => {
-  return rooms;
+  return initialRooms;
 });
 
 // bookings api
