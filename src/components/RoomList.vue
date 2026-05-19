@@ -45,7 +45,8 @@ function editRoomItem(id: string): void {
             title: 'Warning',
             message: '該會議室有未來預約，無法編輯!',
             duration: 3000,
-            type: 'warning'
+            type: 'warning',
+            position: 'bottom-right'
         })
 
         return;
@@ -83,7 +84,8 @@ function deleteRoomItem(id: string): void{
         title: 'Warning',
         message: '該會議室有未來預約，無法刪除!',
         duration: 3000,
-        type: 'warning'
+        type: 'warning',
+        position: 'bottom-right'
     })
 
     return;
@@ -97,7 +99,8 @@ function deleteRoomItem(id: string): void{
         title: 'Success',
         message: '刪除成功',
         duration: 3000,
-        type: 'success'
+        type: 'success',
+        position: 'bottom-right'
     })
    }
 }
@@ -163,6 +166,7 @@ function handleCloseDialoagRoomForm(): void {
       :title="`${roomEditData.id ? '編輯會議室' : '建立會議室'}`"
       destroy-on-close
       @close="resetRoomEditData"
+      class="room-form"
     >
         <RoomForm @closeDialoagRoomForm="handleCloseDialoagRoomForm" :editData="roomEditData"></RoomForm>
     </el-dialog>

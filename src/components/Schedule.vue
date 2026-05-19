@@ -2,14 +2,16 @@
 // import componentes
 import BookingForm from "./BookingForm.vue";
 
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
 
 // import type
 import type { Booking, Room } from "@/types";
 import { useUser } from "@/stores/userStore";
-import type { TableColumnCtx } from "element-plus";
+
+// import element plus notification
+import { ElNotification } from 'element-plus'
 
 const useRoomListStore = useRoomList();
 const useBookingListStore = useBookingList();
@@ -17,6 +19,7 @@ const useUserStore = useUser();
 
 const today = ref("");
 
+// 此時已經選擇好 today 的值，準備要填入 BookingForm
 // 計算出今天的 00:00 分，該值要被傳入 BookingForm
 const todayDateInMidNight = computed(() => {
   const todayDate = new Date(today.value);
@@ -28,7 +31,6 @@ const todayDateInMidNight = computed(() => {
 });
 
 // 先計算一天 9:00-18:00 之間可以分為多少 30分鐘
-// 後來用總共時間計算之後，就不需要這個 function 了
 function calculateTimeBlock(
   [startTime, endTime]: string[],
   blockTime: number = 30,
@@ -115,6 +117,8 @@ const todayBookings = computed<Booking[]>(() => {
 
 // getUserName 獲得 booking.userId 對應的 userName
 // 用來顯示在 時間段的上面
+// 實務上這一塊顯示使用者姓名的功能應該不會就是存取整個 store 
+// 想像公司如果
 function getUserName(userId: string): string {
   return useUserStore.users.find((el) => el.id === userId)!.name;
 }
@@ -217,8 +221,9 @@ function handleCloseDialoagBookingForm(): void {
   dialogBookingFormVisible.value = false;
 }
 
+// 將點擊到的空白處，換算成對應的時間，並存到 ref 中給 打開的 Modal 中的 BookingForm 使用
 function handleTimelineClick(event: MouseEvent, roomId: string): void {
-  console.log('clicked in handleTimelineClick');
+  console.log('點擊在時間軸的空白處');
   const target = event.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
   // console.log(rect);
@@ -239,14 +244,28 @@ function handleTimelineClick(event: MouseEvent, roomId: string): void {
   prefilledStartTime.value = clickedTime;
   dialogBookingFormVisible.value = true;
 }
-const prefilledRoomId = ref<string>("");
+const prefilledRoomId = ref<string>(""); 
 const prefilledStartTime = ref<string>("");
 
-// 因為目前的新增預約會議紀錄的方法是綁定在 timeline list 上面的，所以我們直接將事件避免往上傳遞
-// 阻止打開 Modal 的行為
+// 關閉 dialog 之後會清空 prefilled value
+function resetPrefill(): void {
+  prefilledRoomId.value = '';
+  prefilledStartTime.value = '';  
+}
+
+// 因為目前點擊時間軸新增預約會議紀錄的方法是 綁定在整個時間軸上面的，為了避免點擊已經有預約的時段照樣打開 Modal，
+// 所以我們直接將事件避免往上傳遞阻止打開 Modal 的行為
 function handleTimeBlockClicked(event: MouseEvent): void {
-  console.log('clicked in handleTimeBlockClicked')
-   event.stopPropagation();
+    console.log('點擊目前有預約的時段!')
+    // Warnning notification
+    ElNotification({
+      title: 'Warning',
+      message: '該時段已被預約',
+      duration: 3000,
+      type: 'warning',
+      position: 'bottom-right'
+    })
+    event.stopPropagation(); // 停止事件向父元素傳遞
 }
 
 // -- 另一個渲染時間軸的方法(使用 table?)
@@ -428,13 +447,14 @@ function handleTimeBlockClicked(event: MouseEvent): void {
       title="預約會議室"
       destroy-on-close
       class="booking-dialog"
-    >
-      <BookingForm
-        @closeDialogBookingForm="handleCloseDialoagBookingForm"
-        :todayDateInMidNight="todayDateInMidNight"
-        :prefilledRoomId="prefilledRoomId"
-        :prefilledStartTime="prefilledStartTime"
-      ></BookingForm>
+      @close="resetPrefill"
+      >
+        <BookingForm
+          @closeDialogBookingForm="handleCloseDialoagBookingForm"
+          :todayDateInMidNight="todayDateInMidNight"
+          :prefilledRoomId="prefilledRoomId"
+          :prefilledStartTime="prefilledStartTime"
+        ></BookingForm>
     </el-dialog>
   </div>
 </template>
@@ -492,9 +512,6 @@ function handleTimeBlockClicked(event: MouseEvent): void {
   // 幫 room 加上 border-top 和 border-bottom
   &__room-wrapper {
     border-bottom: 1px solid $color-border;
-    &:first-child {
-      // border-top: 1px solid $color-border;
-    }
   }
 
   // 標題列
@@ -568,16 +585,6 @@ function handleTimeBlockClicked(event: MouseEvent): void {
 // method 2: time-table
 .time-table {
   cursor: pointer;
-
-  &__time-block {
-  }
 }
 
-// dialog media query
-.booking-dialog {
-  @media only screen and (max-width: 62em) {
-    // 992px
-    // width: 100%;
-  }
-}
 </style>

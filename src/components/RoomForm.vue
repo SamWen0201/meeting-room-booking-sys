@@ -75,7 +75,8 @@ async function addRoom(): Promise<void> {
         title: 'Success',
         message: '新增成功',
         duration: 3000,
-        type: 'success'
+        type: 'success',
+        position: 'bottom-right'
       })
 
       emit('closeDialoagRoomForm');
@@ -143,7 +144,8 @@ function editRoom(): void {
         title: 'Success',
         message: '編輯成功',
         duration: 3000,
-        type: 'success'
+        type: 'success',
+        position: 'bottom-right'
       })
 
       emit('closeDialoagRoomForm');

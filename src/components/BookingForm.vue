@@ -11,7 +11,7 @@ import { useRoomList } from "@/stores/roomList";
 import { useBookingList } from "@/stores/bookingListStore";
 import { useUser } from "@/stores/userStore";
 
-// import notification
+// import element plus notification
 import { ElNotification } from 'element-plus'
 
 const useRoomListStore = useRoomList();
@@ -40,6 +40,7 @@ const props = defineProps<{
   prefilledStartTime: string;
 }>();
 // 監聽 props ，如果有值，就將數值填入 BookingForm
+// 使用 getter 方式才能正確監聽數值
 watch(() => props.todayDateInMidNight, (val) => {
   if (val) date.value = val; },
   { immediate: true }
@@ -59,11 +60,12 @@ watch(
   { immediate: true },
 );
 
+
 // 監聽時段的狀態，只要修改時間，會議室的選擇就會 reset
 // 因為目前會議室衝突的邏輯是透過 取消 diable 選項達成的，背後的邏輯沒有在提交的時候做攔截
-watch ([startTime, endTime], () => {
-  roomId.value = '';
-})
+// watch ([startTime, endTime], () => {
+//   roomId.value = '';
+// })
 
 // handle formRules
 const bookingFormRef = ref<FormInstance>();
@@ -161,23 +163,32 @@ async function addBooking(): Promise<void> {
       // addBooking
       console.log("會議主題必須填寫!");
       return;
-    } else if (!durationIsValid()) {
+    }else if (!durationIsValid()) {
       console.log('會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!');
-    }
-    else if (!dateIsValid()) {
+    }else if (!dateIsValid()) {
       console.log('不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間');
 
       // Warnning notification
       ElNotification({
           title: 'Warning',
-          message: '不能選擇過去的時間!',
+          message: '不能選擇過去的時間',
           duration: 3000,
-          type: 'warning'
+          type: 'warning',
+          position: 'bottom-right'
       })
 
     }else if (!roomId.value) {
       console.log('必須要選擇會議室!');
-    } else {
+    }else if(roomIsUsing(roomId.value)) {
+      // 選擇的會議室不能正被使用(也就是有其他的預約)
+      ElNotification({
+          title: 'Warning',
+          message: '該時段此會議室已經被預約，請選擇其他會議室',
+          duration: 3000,
+          type: 'warning',
+         position: 'bottom-right'
+      })
+    }else {
       console.log('表單驗證通過，可以新增!');
       const [bookingStartTime, bookingEndTime] = combineDateTime() as [
         Date,
@@ -205,7 +216,8 @@ async function addBooking(): Promise<void> {
         title: 'Success',
         message: '新增成功',
         duration: 3000,
-        type: 'success'
+        type: 'success',
+        position: 'bottom-right'
       })
       // closse the dialoa
       emit("closeDialogBookingForm");
@@ -422,9 +434,6 @@ const emit = defineEmits(["closeDialogBookingForm"]);
 // @use "../assets/utilities";
 .modify-translate-top {
   transform: translateY(-2.5px);
-}
-.text-ceter {
-  // transform: translateX(0.5rem);
 }
 .bookingform {
   @media only screen and (max-width: 62em) { // 992px

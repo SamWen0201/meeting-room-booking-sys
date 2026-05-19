@@ -93,6 +93,8 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  // to, from 都是路由
+  // next 是執行的相關內容
   const userStore = useUser();
 
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
