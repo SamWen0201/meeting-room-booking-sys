@@ -135,14 +135,19 @@ async function editRoom(): Promise<void> {
     }
   
     if (roomFormIsValid()) {
-      roomListStore.rooms.map( (el) => {
-        if (el.id === props.editData?.id) {
-          el.name = roomAddForm.name;
-          el.capacity = roomAddForm.capacity;
-          el.equipments = roomAddForm.equipments;
-        }
-        return el;
+      roomListStore.editRoom(props.editData!.id, {
+        name: roomAddForm.name,
+        capacity: roomAddForm.capacity,
+        equipments: roomAddForm.equipments
       })
+      // roomListStore.rooms.forEach( (el) => {
+      //   if (el.id === props.editData?.id) {
+      //     el.name = roomAddForm.name;
+      //     el.capacity = roomAddForm.capacity;
+      //     el.equipments = roomAddForm.equipments;
+      //   }
+      //   return el;
+      // })
         // remove the input
       name.value = "";
       capacity.value = 0;
