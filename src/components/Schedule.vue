@@ -68,6 +68,10 @@ function calculateTimeLineHeaderList(
     number,
     number,
   ];
+  const [endTimeHour, endTimeMinute] = endTime.split(":").map(Number) as [
+    number,
+    number,
+  ];
 
   const timeLineHeaderList: string[] = new Array(
     calculateTimeBlock([startTime, endTime], timeFragmentInMinute),
@@ -259,17 +263,15 @@ function resetPrefill(): void {
   prefilledStartTime.value = '';  
 }
 
-
+// 因為目前點擊時間軸新增預約會議紀錄的方法是 綁定在整個時間軸上面的，為了避免點擊已經有預約的時段照樣打開 Modal，
+// 所以我們直接將事件避免往上傳遞阻止打開 Modal 的行為
 
 // 現在點擊該時段會 打開原本已有的預約進行取消預約，或是修改預約
-// 這部分會判斷，如果該預約的預約人是目前的使用者，才可以進行修改
-function bookingEditIsValid(bookingUserId: string) :boolean {
-  return bookingUserId === useUserStore.currentUser?.id;
-}
+// 這部分應該會判斷是該使用者才能夠做預約的修改。
 
 function handleTimeBlockClicked(event: MouseEvent, booking: Booking): void {
   // 如果是該使用者建立的 booking 則能夠對點擊的預約進行編輯
-    if (bookingEditIsValid(booking.userId)) {
+    if (booking.userId === useUserStore.currentUser?.id) {
       editBooking(booking); 
     }else {
       console.log('點擊目前有預約的時段!')
@@ -282,7 +284,9 @@ function handleTimeBlockClicked(event: MouseEvent, booking: Booking): void {
         position: 'bottom-right'
       })
     }
-    event.stopPropagation(); // 停止事件向父元素傳遞，不會觸發 handleTimelineClick，由
+    event.stopPropagation(); // 停止事件向父元素傳遞
+
+    
 }
 
 // bookingEditData 將會儲存預備編輯的 booking 資料，並當作 props 傳給 BookingForm
@@ -295,8 +299,9 @@ const bookingEditData = reactive<Booking>({
   endTime: 0,
 })
 
-// 將點選的 booking 資料存入 bookingEditData
 function editBooking(booking: Booking): void {
+  console.log(booking);
+
   Object.assign(bookingEditData, booking);
   dialogBookingFormVisible.value = true;
 }
@@ -487,7 +492,7 @@ function resetBookingEditData() : void {
     <!-- BookingForm -->
     <el-dialog
       v-model="dialogBookingFormVisible"
-      :title="`${bookingEditData?.id ? '編輯預約' : '預約會議室'}`"
+      title="預約會議室"
       destroy-on-close
       class="booking-dialog"
       @close="resetAfterDialogClose"

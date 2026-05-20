@@ -27,13 +27,8 @@ export const useRoomList = defineStore("roomList", () => {
     rooms.value = rooms.value.filter( (el) => el.id !== id);
   }
 
-  function editRoom(roomId: string, updateData: Partial<Room>): void{
-    const editRoom = rooms.value.find( (el) => el.id === roomId);
-    if (!editRoom) {
-      return;
-    }
-    Object.assign(editRoom, updateData);
+  function editRoom(){
   }
 
-  return { rooms,  fetchRooms, addRoom, editRoom, deleteRoom };
+  return { rooms, addRoom, fetchRooms, deleteRoom };
 });
