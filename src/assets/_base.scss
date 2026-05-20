@@ -7,6 +7,13 @@
     --color-text-main: #1F2937;
     --color-slidebar: #111827;
     --color-border: #E5E7EB;
+
+    // TIME LINE BACKGROUND COLORS
+    --color-timeline-primary-blue: #649efa;
+    --color-timeline-sucess: #2ab889;
+    --color-timeline-danger: #ee6161;
+
+    // override element plus css style 
 }   
 *, 
 *::before, 
@@ -17,9 +24,30 @@
 }
 html {
   font-size: 62.5%; // 16 * 62.5% = 10
+
+  @media only screen and (max-width: 56.25em) { // 900px
+    font-size: 50%;;
+  }
 }
+
+
 body {
   box-sizing: border-box;
   font-family: "Noto Sans TC", sans-serif;
   font-weight: $font-weight-body;
+}
+
+.main {
+  background-color: $color-border;
+  color: $color-text-main;
+}
+
+.booking-dialog, .room-form {
+  @media only screen and (max-width:62em) { // 992px md
+    width: 70% !important;
+  }
+
+  @media only screen and (max-width:48em) { // 768px sm
+    width: 80% !important;
+  }
 }

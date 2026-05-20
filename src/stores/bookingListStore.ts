@@ -17,7 +17,21 @@ export const useBookingList = defineStore('bookingList', () => {
         console.log("booking is added!");
     }
 
-    
 
-    return {bookings, fetchBookings, addBooking}
+    function editBooking(bookingId: string, updatedData: Partial<Booking>): void {
+        const editBooking = bookings.value.find( (el) => el.id === bookingId);
+        if (!editBooking) {
+            return;
+        }
+        Object.assign(editBooking, updatedData);
+    }
+
+    function deleteBooking(bookingId: string): void {
+        if (!bookingId){
+            return;
+        }
+        bookings.value = bookings.value.filter( (el) => (el.id !== bookingId));
+    }
+
+    return {bookings, fetchBookings, addBooking, editBooking, deleteBooking}
 })
