@@ -8,14 +8,14 @@ import type { FormInstance } from "element-plus";
 
 // import store
 import { useRoomList } from "@/stores/roomList";
-import { useBookingList } from "@/stores/bookingListStore";
+import { useBookingListStore } from "@/stores/bookingList";
 import { useUser } from "@/stores/userStore";
 
 // import element plus notification
-import { ElNotification } from 'element-plus'
+import { ElNotification } from "element-plus";
 
 const useRoomListStore = useRoomList();
-const useBookingListStore = useBookingList();
+const bookingListStore = useBookingListStore();
 const useUserStore = useUser();
 
 const title = ref<string>("");
@@ -42,10 +42,13 @@ const props = defineProps<{
 }>();
 // 監聽 props ，如果有值，就將數值填入 BookingForm
 // 使用 getter 方式才能正確監聽數值
-watch(() => props.todayDateInMidNight, (val) => {
-  if (val) date.value = val; },
-  { immediate: true }
-)
+watch(
+  () => props.todayDateInMidNight,
+  (val) => {
+    if (val) date.value = val;
+  },
+  { immediate: true },
+);
 watch(
   () => props.prefilledRoomId,
   (val) => {
@@ -60,7 +63,6 @@ watch(
   },
   { immediate: true },
 );
-
 
 // 監聽時段的狀態，只要修改時間，會議室的選擇就會 reset
 // 因為目前會議室衝突的邏輯是透過 取消 diable 選項達成的，背後的邏輯沒有在提交的時候做攔截
@@ -81,11 +83,11 @@ const formRules = reactive({
       trigger: "blur",
     },
   ],
-   date: [
+  date: [
     {
       required: true,
-      type: 'date',
-      message: '必須輸入日期',
+      type: "date",
+      message: "必須輸入日期",
       trigger: "change",
     },
   ],
@@ -147,7 +149,6 @@ async function addBooking(): Promise<void> {
   // 演算法核心：Existing.Start < New.End AND Existing.End > New.Start。
   // 若上述條件成立，代表時段重疊，該會議室不可選或送出表單時需報錯。
 
-
   // 增加 el-form 驗證邏輯
   if (!bookingFormRef.value) return;
 
@@ -160,17 +161,17 @@ async function addBooking(): Promise<void> {
     if (roomIsUsing(roomId.value)) {
       // 選擇的會議室不能正被使用(也就是有其他的預約)
       ElNotification({
-          title: 'Warning',
-          message: '該時段此會議室已經被預約，請選擇其他會議室',
-          duration: 3000,
-          type: 'warning',
-         position: 'bottom-right'
-      })
+        title: "Warning",
+        message: "該時段此會議室已經被預約，請選擇其他會議室",
+        duration: 3000,
+        type: "warning",
+        position: "bottom-right",
+      });
       return;
     }
 
-    if(bookingFormIsValid()){
-      console.log('表單驗證通過，可以新增!');
+    if (bookingFormIsValid()) {
+      console.log("表單驗證通過，可以新增!");
 
       const [bookingStartTime, bookingEndTime] = combineDateTime() as [
         Date,
@@ -185,7 +186,7 @@ async function addBooking(): Promise<void> {
         startTime: bookingStartTime?.getTime(),
         endTime: bookingEndTime?.getTime(),
       };
-      useBookingListStore.addBooking(newBooking);
+      bookingListStore.addBooking(newBooking);
 
       // remove the input
       roomId.value = "";
@@ -195,12 +196,12 @@ async function addBooking(): Promise<void> {
 
       // Sucess notification
       ElNotification({
-        title: 'Success',
-        message: '新增成功',
+        title: "Success",
+        message: "新增成功",
         duration: 3000,
-        type: 'success',
-        position: 'bottom-right'
-      })
+        type: "success",
+        position: "bottom-right",
+      });
       // closse the dialoa
       emit("closeDialogBookingForm");
     }
@@ -208,36 +209,38 @@ async function addBooking(): Promise<void> {
 }
 
 function bookingFormIsValid(): boolean {
+  if (!titleIsValid()) {
+    // 會議主題必須填寫!
+    console.log("會議主題必須填寫!");
+    return false;
+  } else if (!durationIsValid()) {
+    // 會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!
+    console.log(
+      "會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!",
+    );
+    return false;
+  } else if (!dateIsValid()) {
+    // 不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間
+    console.log(
+      "不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間",
+    );
 
-  
-   if (!titleIsValid()) {
-      // 會議主題必須填寫!
-      console.log("會議主題必須填寫!");
-      return false;
-    }else if (!durationIsValid()) {
-      // 會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!
-      console.log('會議持續時間必須以30分鐘為單位! 並且開始時間不得大於結束時間!');
-      return false;
-    }else if (!dateIsValid()) {
-      // 不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間
-      console.log('不能選擇過去的時間，並且選擇的預約時間只能介於 9:00-18:00 之間');
-      
-      // Warnning notification
-      ElNotification({
-          title: 'Warning',
-          message: '不能選擇過去的時間，並且預約時間只能介於 9:00-18:00 之間',
-          duration: 3000,
-          type: 'warning',
-          position: 'bottom-right'
-      })
-      return false;
-    }else if (!roomId.value) {
-      // 必須要選擇會議室!
-      console.log('必須要選擇會議室!');
-      return false;
-    }else {
-      return true;
-    }
+    // Warnning notification
+    ElNotification({
+      title: "Warning",
+      message: "不能選擇過去的時間，並且預約時間只能介於 9:00-18:00 之間",
+      duration: 3000,
+      type: "warning",
+      position: "bottom-right",
+    });
+    return false;
+  } else if (!roomId.value) {
+    // 必須要選擇會議室!
+    console.log("必須要選擇會議室!");
+    return false;
+  } else {
+    return true;
+  }
 }
 
 // 輸入限制：
@@ -271,7 +274,7 @@ function durationIsValid(): boolean {
   }
 
   // 時間以 30 分鐘為一單位
-  const duration =  (endHour * 60 + endMinute) - startHour * 60 + startMinute;
+  const duration = endHour * 60 + endMinute - startHour * 60 + startMinute;
 
   if (duration % 30 !== 0) {
     return false;
@@ -320,12 +323,11 @@ function roomIsUsing(roomId: string): boolean {
   // 這邊用 filter 同時去做判斷該 roomId 中
 
   // bookingsInTheRoom 是使用該會議室的 預約記錄
-  let bookingsInTheRoom: Booking[] = useBookingListStore.bookings.filter(
+  let bookingsInTheRoom: Booking[] = bookingListStore.bookings.filter(
     (el): boolean => el.roomId === roomId,
   );
   console.log(bookingsInTheRoom);
-  
- 
+
   const [bookingStartTime, bookingEndTime] = combineDateTime();
 
   if (bookingStartTime === undefined || bookingEndTime === undefined) {
@@ -336,11 +338,13 @@ function roomIsUsing(roomId: string): boolean {
 
   // 如果現在是編輯，先將自己從 bookingsInTheRoom 刪除
   if (isEditing?.value) {
-    bookingsInTheRoom = bookingsInTheRoom.filter( (booking) => (booking.id !== props.bookingEditData.id));
+    bookingsInTheRoom = bookingsInTheRoom.filter(
+      (booking) => booking.id !== props.bookingEditData.id,
+    );
     console.log(bookingsInTheRoom);
   }
 
-   // 在使用該會議室的 多個預約記錄，找到跟 BookingForm 選擇的會議時間段 衝突的紀錄
+  // 在使用該會議室的 多個預約記錄，找到跟 BookingForm 選擇的會議時間段 衝突的紀錄
   const conflictBooking = bookingsInTheRoom.find(
     (el) =>
       bookingStartTime.getTime() < el.endTime &&
@@ -359,19 +363,22 @@ function roomIsUsing(roomId: string): boolean {
 // emit closeDialogBookingForm events
 const emit = defineEmits(["closeDialogBookingForm"]);
 
-// 偵測目前是否是編輯 booking 
+// 偵測目前是否是編輯 booking
 const isEditing = computed(() => {
   return props.bookingEditData?.id ? true : false;
-})
+});
 
 // 將從 props 獲得的值填入 bookingForm
 function fillInEditBookingData(): void {
   if (isEditing.value) {
     form.title = props.bookingEditData.title;
-    form.roomId =props.bookingEditData.roomId;
-    form.startTime = transformTimeStampToHourMinuteTimeString(props.bookingEditData.startTime);
-    form.endTime = transformTimeStampToHourMinuteTimeString(props.bookingEditData.endTime);
-  
+    form.roomId = props.bookingEditData.roomId;
+    form.startTime = transformTimeStampToHourMinuteTimeString(
+      props.bookingEditData.startTime,
+    );
+    form.endTime = transformTimeStampToHourMinuteTimeString(
+      props.bookingEditData.endTime,
+    );
   }
 }
 
@@ -381,12 +388,12 @@ function transformTimeStampToHourMinuteTimeString(timestamp: number): string {
   const hours = theDate.getHours();
   const minutes = theDate.getMinutes();
 
-  return `${hours}:${minutes ? minutes : '00'}`;
+  return `${hours}:${minutes ? minutes : "00"}`;
 }
 
 onMounted(() => {
   fillInEditBookingData();
-})
+});
 
 // 修改預約
 // 修改預約的判斷邏輯 跟 新增預約的判斷邏輯有些微不同
@@ -394,17 +401,17 @@ onMounted(() => {
 function editBooking(): void {
   if (isEditing.value) {
     // 如果修改的資料確實存在
-    // 去找到要進行編輯的 booking 
-    
+    // 去找到要進行編輯的 booking
+
     if (roomIsUsing(roomId.value)) {
       // 選擇的會議室不能正被使用(也就是有其他的預約)
       ElNotification({
-          title: 'Warning',
-          message: '該時段此會議室已經被預約，請選擇其他會議室',
-          duration: 3000,
-          type: 'warning',
-         position: 'bottom-right'
-      })
+        title: "Warning",
+        message: "該時段此會議室已經被預約，請選擇其他會議室",
+        duration: 3000,
+        type: "warning",
+        position: "bottom-right",
+      });
       return;
     }
 
@@ -414,24 +421,24 @@ function editBooking(): void {
         Date,
       ];
 
-      useBookingListStore.editBooking(props.bookingEditData!.id, {
+      bookingListStore.editBooking(props.bookingEditData!.id, {
         title: form.title,
         roomId: form.roomId,
         startTime: bookingStartTime.getTime(),
-        endTime: bookingEndTime.getTime()
+        endTime: bookingEndTime.getTime(),
       });
-      
+
       // Sucess notification
       ElNotification({
-        title: 'Success',
-        message: '編輯成功',
+        title: "Success",
+        message: "編輯成功",
         duration: 3000,
-        type: 'success',
-        position: 'bottom-right'
-      })
+        type: "success",
+        position: "bottom-right",
+      });
 
-      emit('closeDialogBookingForm'); // 確認編輯完畢之後就關閉目前的 Modal
-    } 
+      emit("closeDialogBookingForm"); // 確認編輯完畢之後就關閉目前的 Modal
+    }
   }
 }
 
@@ -439,22 +446,21 @@ function editBooking(): void {
 function deleteBooking(): void {
   if (isEditing?.value) {
     // 如果修改的資料確實存在
-    useBookingListStore.deleteBooking(props.bookingEditData.id);
-    
+    bookingListStore.deleteBooking(props.bookingEditData.id);
+
     // Sucess notification
-      ElNotification({
-        title: 'Success',
-        message: '順利取消預約',
-        duration: 3000,
-        type: 'success',
-        position: 'bottom-right'
-      })
+    ElNotification({
+      title: "Success",
+      message: "順利取消預約",
+      duration: 3000,
+      type: "success",
+      position: "bottom-right",
+    });
     // 這裡在刪除預約之前，應該會再一次跳出 Modal 讓使用者確認?
     // 稍等實作
   }
 
-  
-  emit('closeDialogBookingForm'); 
+  emit("closeDialogBookingForm");
 }
 </script>
 <template>
@@ -486,7 +492,7 @@ function deleteBooking(): void {
           <el-form-item label="時段" label-position="top" required>
             <el-col :md="11">
               <div class="modify-translate-top">
-                <el-form-item prop="startTime" >
+                <el-form-item prop="startTime">
                   <el-time-select
                     v-model="form.startTime"
                     :max-time="endTime"
@@ -569,7 +575,7 @@ function deleteBooking(): void {
           <el-form-item label="時段" label-position="top" required>
             <el-col :md="11">
               <div class="modify-translate-top">
-                <el-form-item prop="startTime" >
+                <el-form-item prop="startTime">
                   <el-time-select
                     v-model="form.startTime"
                     :max-time="endTime"
@@ -631,7 +637,8 @@ function deleteBooking(): void {
   transform: translateY(-2.5px);
 }
 .bookingform {
-  @media only screen and (max-width: 62em) { // 992px
+  @media only screen and (max-width: 62em) {
+    // 992px
     width: 100%;
   }
 }

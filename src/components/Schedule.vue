@@ -4,17 +4,17 @@ import BookingForm from "./BookingForm.vue";
 
 import { computed, reactive, ref } from "vue";
 import { useRoomList } from "@/stores/roomList";
-import { useBookingList } from "@/stores/bookingListStore";
+import { useBookingListStore } from "@/stores/bookingList.ts";
 
 // import type
 import type { Booking, Room } from "@/types";
 import { useUser } from "@/stores/userStore";
 
 // import element plus notification
-import { ElNotification } from 'element-plus'
+import { ElNotification } from "element-plus";
 
 const useRoomListStore = useRoomList();
-const useBookingListStore = useBookingList();
+const bookingListStore = useBookingListStore();
 const useUserStore = useUser();
 
 const today = ref("");
@@ -91,7 +91,7 @@ const timeHeaderList = calculateTimeLineHeaderList("09:00", "18:00");
 // 1. 先獲得今天的 預約紀錄 -> 今天 + 1 天，怎麼去找到屬於這一天的紀錄
 const todayBookings = computed<Booking[]>(() => {
   // 將預約紀錄的日期等於今天日期的所有預約紀錄計算出來
-  return useBookingListStore.bookings.filter((el) => {
+  return bookingListStore.bookings.filter((el) => {
     const bookingDate = new Date(el.startTime);
     const todayDate = new Date(today.value);
 
@@ -113,7 +113,7 @@ const todayBookings = computed<Booking[]>(() => {
 
 // getUserName 獲得 booking.userId 對應的 userName
 // 用來顯示在 時間段的上面
-// 實務上這一塊顯示使用者姓名的功能應該不會就是存取整個 store 
+// 實務上這一塊顯示使用者姓名的功能應該不會就是存取整個 store
 // 想像公司如果
 function getUserName(userId: string): string {
   return useUserStore.users.find((el) => el.id === userId)!.name;
@@ -193,10 +193,10 @@ const timeBlockColors = [
 
 // 原本是透過隨機的方式給予顏色，現在透過 charCodeAt 計算出 bookingId 的第一個 ASCII 碼(重點是 ASCII 碼一定會是整數)，之後除以色碼的長度獲得的餘數當作 index
 // 現在顏色會是固定的渲染方式
-function getBookingColor(bookingId: string): { "background-color": string }  {
+function getBookingColor(bookingId: string): { "background-color": string } {
   const index = bookingId.charCodeAt(0) % timeBlockColors.length;
-  
-  return { "background-color": timeBlockColors[index] as string};
+
+  return { "background-color": timeBlockColors[index] as string };
 }
 
 // getTimeBlockInfo(booking: Booking) 獲得當前 time block 的詳細資訊:包含 會議主題、開始時間到結束時間、會議時長、預約人
@@ -229,7 +229,7 @@ function resetAfterDialogClose(): void {
 
 // 將點擊到的空白處，換算成對應的時間，並存到 ref 中給 打開的 Modal 中的 BookingForm 使用
 function handleTimelineClick(event: MouseEvent, roomId: string): void {
-  console.log('點擊在時間軸的空白處');
+  console.log("點擊在時間軸的空白處");
   const target = event.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
   // console.log(rect);
@@ -250,50 +250,48 @@ function handleTimelineClick(event: MouseEvent, roomId: string): void {
   prefilledStartTime.value = clickedTime;
   dialogBookingFormVisible.value = true;
 }
-const prefilledRoomId = ref<string>(""); 
+const prefilledRoomId = ref<string>("");
 const prefilledStartTime = ref<string>("");
 
 // 關閉 dialog 之後會清空 prefilled value
 function resetPrefill(): void {
-  prefilledRoomId.value = '';
-  prefilledStartTime.value = '';  
+  prefilledRoomId.value = "";
+  prefilledStartTime.value = "";
 }
-
-
 
 // 現在點擊該時段會 打開原本已有的預約進行取消預約，或是修改預約
 // 這部分會判斷，如果該預約的預約人是目前的使用者，才可以進行修改
-function bookingEditIsValid(bookingUserId: string) :boolean {
+function bookingEditIsValid(bookingUserId: string): boolean {
   return bookingUserId === useUserStore.currentUser?.id;
 }
 
 function handleTimeBlockClicked(event: MouseEvent, booking: Booking): void {
   // 如果是該使用者建立的 booking 則能夠對點擊的預約進行編輯
-    if (bookingEditIsValid(booking.userId)) {
-      editBooking(booking); 
-    }else {
-      console.log('點擊目前有預約的時段!')
-      // Warnning notification
-      ElNotification({
-        title: 'Warning',
-        message: '該時段已被預約',
-        duration: 3000,
-        type: 'warning',
-        position: 'bottom-right'
-      })
-    }
-    event.stopPropagation(); // 停止事件向父元素傳遞，不會觸發 handleTimelineClick，由
+  if (bookingEditIsValid(booking.userId)) {
+    editBooking(booking);
+  } else {
+    console.log("點擊目前有預約的時段!");
+    // Warnning notification
+    ElNotification({
+      title: "Warning",
+      message: "該時段已被預約",
+      duration: 3000,
+      type: "warning",
+      position: "bottom-right",
+    });
+  }
+  event.stopPropagation(); // 停止事件向父元素傳遞，不會觸發 handleTimelineClick，由
 }
 
 // bookingEditData 將會儲存預備編輯的 booking 資料，並當作 props 傳給 BookingForm
 const bookingEditData = reactive<Booking>({
-  id: '',
-  roomId: '',
-  userId: '',
-  title: '',
+  id: "",
+  roomId: "",
+  userId: "",
+  title: "",
   startTime: 0,
   endTime: 0,
-})
+});
 
 // 將點選的 booking 資料存入 bookingEditData
 function editBooking(booking: Booking): void {
@@ -301,15 +299,14 @@ function editBooking(booking: Booking): void {
   dialogBookingFormVisible.value = true;
 }
 
-function resetBookingEditData() : void {
-  bookingEditData.id = '';
-  bookingEditData.roomId = '';
-  bookingEditData.userId = '';
-  bookingEditData.title = '';
+function resetBookingEditData(): void {
+  bookingEditData.id = "";
+  bookingEditData.roomId = "";
+  bookingEditData.userId = "";
+  bookingEditData.title = "";
   bookingEditData.startTime = 0;
   bookingEditData.endTime = 0;
 }
-
 
 // -- 另一個渲染時間軸的方法(使用 table?)
 // 目前的想法是將 table 和時間段分開處理，先渲染出表格
@@ -378,7 +375,6 @@ function resetBookingEditData() : void {
 
 // // 會回傳預約有預約紀錄的 style
 // function getTimeBlockStyle(): {} | void {}
-
 </script>
 
 <template>
@@ -443,10 +439,7 @@ function resetBookingEditData() : void {
                 :content="getTimeBlockInfo(booking)"
               >
                 <div
-                  :style="[
-                    getBookingColor(booking.id),
-                    getBlockStyle(booking),
-                  ]"
+                  :style="[getBookingColor(booking.id), getBlockStyle(booking)]"
                   class="timeline-chart__time-block"
                   @click="handleTimeBlockClicked($event, booking)"
                 >
@@ -491,14 +484,14 @@ function resetBookingEditData() : void {
       destroy-on-close
       class="booking-dialog"
       @close="resetAfterDialogClose"
-      >
-        <BookingForm
-          @closeDialogBookingForm="handleCloseDialoagBookingForm"
-          :todayDateInMidNight="todayDateInMidNight"
-          :prefilledRoomId="prefilledRoomId"
-          :prefilledStartTime="prefilledStartTime"
-          :bookingEditData="bookingEditData"
-        ></BookingForm>
+    >
+      <BookingForm
+        @closeDialogBookingForm="handleCloseDialoagBookingForm"
+        :todayDateInMidNight="todayDateInMidNight"
+        :prefilledRoomId="prefilledRoomId"
+        :prefilledStartTime="prefilledStartTime"
+        :bookingEditData="bookingEditData"
+      ></BookingForm>
     </el-dialog>
   </div>
 </template>
@@ -529,7 +522,7 @@ function resetBookingEditData() : void {
   }
 
   @media only screen and (max-width: 56.25em) {
-       overflow: scroll;
+    overflow: scroll;
   }
 
   // timeline 標題列
@@ -549,9 +542,8 @@ function resetBookingEditData() : void {
     }
 
     @media only screen and (max-width: 56.25em) {
-        min-width: 75em;
+      min-width: 75em;
     }
-    
   }
   // 幫 room 加上 border-top 和 border-bottom
   &__room-wrapper {
@@ -591,7 +583,7 @@ function resetBookingEditData() : void {
     flex: 1 1 auto;
     position: relative;
 
-    // 畫出兩邊的 border 
+    // 畫出兩邊的 border
     background-image: repeating-linear-gradient(
       to right,
       $color-border,
@@ -630,5 +622,4 @@ function resetBookingEditData() : void {
 .time-table {
   cursor: pointer;
 }
-
 </style>

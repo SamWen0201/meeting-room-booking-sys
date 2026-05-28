@@ -116,12 +116,12 @@ onMounted(async () => {
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useRoomList } from "./stores/roomList";
-import { useBookingList } from "./stores/bookingListStore";
+import { useBookingListStore } from "./stores/bookingList";
 import { useUser } from "./stores/userStore";
 
 const dataIsReady = ref<boolean>(false);
 const roomListStore = useRoomList();
-const bookingListStore = useBookingList();
+const bookingListStore = useBookingListStore();
 const userStore = useUser();
 
 onMounted(async () => {
